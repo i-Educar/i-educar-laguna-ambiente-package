@@ -1,0 +1,35 @@
+/**
+ * Tokens Buriti — alinhado ao painel municipal (dashboard).
+ * Paleta sóbria: azul-petróleo + fundo claro + superfícies brancas.
+ */
+:root,
+.tema-buriti-laguna {
+  --cor: #0e2a3a;
+  --destaque: #1a5f78;
+  --acento: #0d7a6f;
+  --nav: #f4f7f9;
+  --nav-borda: #d7e0e7;
+  --nav-texto: #1a3344;
+  --nav-mute: #5a6b76;
+  --fundo: #eef2f5;
+  --clara: #e6eef3;
+  --superficie: #ffffff;
+  --tinta: #142028;
+  --suave: #5a6b76;
+  --linha: #d0dbe3;
+  --ok: #146c42;
+  --ok-fundo: #e4f5eb;
+  --erro: #8f2424;
+  --erro-fundo: #fceceb;
+  --ambar: #a85f00;
+  --ambar-fundo: #fff5e6;
+  --topo-h: 52px;
+  --lateral-w: 256px;
+  --raio: 10px;
+  --raio-sm: 8px;
+  --fonte: "Manrope", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --ico-btn: 40px;
+  --sombra: 0 1px 2px rgba(14, 42, 58, 0.04), 0 8px 24px rgba(14, 42, 58, 0.06);
+  --sombra-leve: 0 1px 2px rgba(14, 42, 58, 0.05);
+  --foco: 0 0 0 3px color-mix(in srgb, var(--destaque) 28%, transparent);
+}

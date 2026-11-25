@@ -15,6 +15,10 @@ final class Processos
 
     public const SETUP = 889911;
 
+    public const TEMA = 889912;
+
+    public const USUARIOS = 889913;
+
     /** @return array<int, string> */
     public static function titulos(): array
     {
@@ -23,6 +27,8 @@ final class Processos
             self::PAINEL => 'Painel ambiente',
             self::CHECK => 'Verificar módulos',
             self::SETUP => 'Setup / povoar teste',
+            self::TEMA => 'Tema visual Buriti',
+            self::USUARIOS => 'Suspender usuários',
         ];
     }
 }

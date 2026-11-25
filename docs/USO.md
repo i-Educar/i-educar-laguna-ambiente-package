@@ -19,6 +19,8 @@ php artisan laguna:ensaiar
 
 No browser (admin): menu **Ambiente Laguna** → Verificar → Setup teste.
 
+Tema visual (onda 1): **Ambiente Laguna → Tema visual** (`/laguna-ambiente/tema`), ou `BURITI_TEMA_ATIVO=true` no `.env`.
+
 ## Critérios
 
 - Obrigatórios OK no `laguna:check`

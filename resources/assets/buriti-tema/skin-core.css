@@ -1,0 +1,500 @@
+/**
+ * Skin Buriti no core i-Educar — overlay moderno sem esconder chrome.
+ * Mantém cabeçalho, home/breadcrumb, menu lateral e superfícies visíveis.
+ */
+body.tema-buriti-laguna {
+  font-family: var(--fonte);
+  color: var(--tinta);
+  background: var(--fundo);
+  -webkit-font-smoothing: antialiased;
+}
+
+body.tema-buriti-laguna a {
+  color: var(--destaque);
+}
+
+/* —— Cabeçalho (padrão reconhecível: faixa sólida + texto claro) —— */
+body.tema-buriti-laguna .ieducar-header,
+body.tema-buriti-laguna tr.topo td,
+body.tema-buriti-laguna .ieducar-header-links {
+  overflow: visible !important;
+}
+
+body.tema-buriti-laguna .ieducar-header {
+  min-height: var(--topo-h);
+  height: var(--topo-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 18px 0 20px;
+  background: linear-gradient(105deg, var(--cor) 0%, var(--destaque) 72%, color-mix(in srgb, var(--acento) 55%, var(--destaque)) 100%);
+  border-bottom: 0;
+  box-shadow: 0 2px 10px rgba(14, 42, 58, 0.18);
+  position: relative;
+  z-index: 1200;
+}
+
+body.tema-buriti-laguna .ieducar-header-logo {
+  padding-left: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+body.tema-buriti-laguna .ieducar-header-logo h1 a {
+  color: #fff !important;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-size: 1.2rem;
+  line-height: var(--topo-h);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
+}
+
+body.tema-buriti-laguna .ieducar-header-logo h1 a:hover {
+  opacity: 0.92;
+}
+
+body.tema-buriti-laguna .ieducar-header-links {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  position: relative;
+  z-index: 1201;
+}
+
+body.tema-buriti-laguna .ieducar-header-links .dropdown,
+body.tema-buriti-laguna .ieducar-header-links .avatar,
+body.tema-buriti-laguna .ieducar-header-links .notifications {
+  float: none;
+  margin: 0;
+  position: relative;
+}
+
+body.tema-buriti-laguna .ieducar-header-links .dropbtn {
+  color: #fff;
+  background-color: transparent;
+  border: 0;
+  border-radius: var(--raio-sm);
+  min-height: 34px;
+  padding: 6px 22px 6px 10px;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+body.tema-buriti-laguna .ieducar-header-links .dropbtn:hover,
+body.tema-buriti-laguna .ieducar-header-links .dropdown:hover .dropbtn {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+/* Não usar overflow:hidden aqui: corta painéis e impede clique em itens longos */
+body.tema-buriti-laguna .ieducar-header-links .dropdown-content,
+body.tema-buriti-laguna .ieducar-header-links .dropdown-content-notifications {
+  border-radius: 12px;
+  border: 1px solid var(--linha);
+  box-shadow: var(--sombra);
+  background: var(--superficie);
+  margin-top: 6px;
+  z-index: 1300;
+}
+
+body.tema-buriti-laguna .ieducar-header-links .dropdown:hover .dropdown-content {
+  display: block;
+}
+
+body.tema-buriti-laguna .ieducar-header-links .dropdown-content-notifications {
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: min(70vh, 360px);
+}
+
+body.tema-buriti-laguna .ieducar-header-links .dropdown-content a {
+  color: var(--tinta);
+  font-weight: 600;
+}
+
+body.tema-buriti-laguna .ieducar-header-links .dropdown-content a:hover {
+  background: var(--clara);
+  color: var(--destaque);
+}
+
+body.tema-buriti-laguna .ieducar-header-links .avatar img,
+body.tema-buriti-laguna .ieducar-header-links .avatar-35 {
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+body.tema-buriti-laguna .ieducar-header-links .notifications img {
+  filter: brightness(0) invert(1);
+  opacity: 0.95;
+}
+
+/* —— Lateral clara (admin moderno) —— */
+body.tema-buriti-laguna .ieducar-sidebar,
+body.tema-buriti-laguna #menu_lateral,
+body.tema-buriti-laguna td.r3c1 {
+  width: var(--lateral-w) !important;
+  background: var(--nav) !important;
+  color: var(--nav-texto);
+  border-right: 1px solid var(--nav-borda);
+  vertical-align: top;
+}
+
+body.tema-buriti-laguna .ieducar-quick-search {
+  padding: 14px 14px 6px;
+}
+
+body.tema-buriti-laguna .ieducar-quick-search-title {
+  color: var(--nav-mute);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  font-weight: 800;
+}
+
+body.tema-buriti-laguna .ieducar-quick-search-input,
+body.tema-buriti-laguna .quick-search .multiselect__tags {
+  border: 1px solid var(--linha) !important;
+  border-radius: var(--raio-sm) !important;
+  background: var(--superficie) !important;
+  box-shadow: var(--sombra-leve);
+}
+
+body.tema-buriti-laguna .ieducar-sidebar-menu {
+  width: 100%;
+  padding: 4px 10px 16px;
+}
+
+body.tema-buriti-laguna .ieducar-sidebar-menu li a {
+  color: var(--nav-texto) !important;
+  border-radius: var(--raio);
+  padding: 11px 12px !important;
+  margin: 3px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 0.92rem;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+body.tema-buriti-laguna .ieducar-sidebar-menu li a i {
+  width: 22px;
+  text-align: center;
+  color: var(--destaque) !important;
+  font-size: 1.05rem;
+  opacity: 1;
+  padding-right: 0;
+}
+
+body.tema-buriti-laguna .ieducar-sidebar-menu li a:hover {
+  background: color-mix(in srgb, var(--clara) 80%, #fff) !important;
+  color: var(--cor) !important;
+}
+
+body.tema-buriti-laguna .ieducar-sidebar-menu-active,
+body.tema-buriti-laguna .ieducar-sidebar-menu li.ieducar-sidebar-menu-active a,
+body.tema-buriti-laguna .ieducar-sidebar-menu li a.ieducar-sidebar-menu-active {
+  background: color-mix(in srgb, var(--destaque) 12%, #fff) !important;
+  color: var(--cor) !important;
+  box-shadow: inset 3px 0 0 var(--destaque);
+  font-weight: 800;
+}
+
+/* —— Menu superior (abas) —— */
+body.tema-buriti-laguna .ieducar-menu-container {
+  background: var(--superficie);
+  border-bottom: 1px solid var(--linha);
+  padding: 0 8px;
+  box-shadow: var(--sombra-leve);
+  overflow: visible !important;
+  position: relative;
+  z-index: 1100;
+}
+
+body.tema-buriti-laguna .ieducar-menu {
+  background: transparent;
+  overflow: visible !important;
+}
+
+body.tema-buriti-laguna .ieducar-menu > li {
+  position: relative;
+}
+
+body.tema-buriti-laguna .ieducar-menu > li:hover {
+  background: color-mix(in srgb, var(--clara) 70%, #fff);
+  border-radius: var(--raio-sm) var(--raio-sm) 0 0;
+  z-index: 1102;
+}
+
+body.tema-buriti-laguna .ieducar-menu a {
+  color: var(--nav-texto);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 12px 14px;
+}
+
+body.tema-buriti-laguna .ieducar-menu a.ieducar-sidebar-menu-active {
+  color: var(--destaque);
+  box-shadow: inset 0 -3px 0 var(--destaque);
+}
+
+/*
+ * Submenus aninhados abrem à direita (left: 100%).
+ * overflow:hidden cortava os níveis filhos — manter visible.
+ */
+body.tema-buriti-laguna .ieducar-sub-menu {
+  background: var(--superficie);
+  border: 1px solid var(--linha);
+  border-radius: 12px;
+  box-shadow: var(--sombra);
+  overflow: visible !important;
+  min-width: 240px;
+  z-index: 1105;
+}
+
+body.tema-buriti-laguna .ieducar-menu li:hover > .ieducar-sub-menu,
+body.tema-buriti-laguna .ieducar-sub-menu li:hover > .ieducar-sub-menu {
+  display: block;
+}
+
+body.tema-buriti-laguna .ieducar-sub-menu li {
+  position: relative;
+}
+
+body.tema-buriti-laguna .ieducar-sub-menu li:hover {
+  background: var(--clara);
+  z-index: 1;
+}
+
+body.tema-buriti-laguna .ieducar-sub-menu li a {
+  color: var(--tinta);
+  padding: 9px 14px;
+  pointer-events: auto;
+}
+
+/* Células do shell: não clipar menus flutuantes */
+body.tema-buriti-laguna table.tabelanum1,
+body.tema-buriti-laguna table.tabelanum2,
+body.tema-buriti-laguna #menu_lateral,
+body.tema-buriti-laguna td.r3c1,
+body.tema-buriti-laguna .ieducar-sidebar {
+  overflow: visible !important;
+}
+
+body.tema-buriti-laguna .ieducar-sidebar-menu li a {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* —— Breadcrumb + Home (NÃO ocultar) —— */
+body.tema-buriti-laguna .breadcrumb,
+body.tema-buriti-laguna #breadcrumb,
+body.tema-buriti-laguna .ieducar-breadcrumb {
+  display: flex !important;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 2px;
+  margin: 12px 0 14px;
+  padding: 10px 14px;
+  background: var(--superficie);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra-leve);
+}
+
+body.tema-buriti-laguna td.fundoLocalizacao {
+  display: table-cell !important;
+  margin: 0;
+  padding: 10px 14px !important;
+  background: var(--superficie) !important;
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra-leve);
+}
+
+body.tema-buriti-laguna td.fundoLocalizacao .breadcrumb {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+body.tema-buriti-laguna .breadcrumb a,
+body.tema-buriti-laguna .breadcrumb span,
+body.tema-buriti-laguna td.fundoLocalizacao a,
+body.tema-buriti-laguna td.fundoLocalizacao span {
+  font-weight: 700 !important;
+  color: var(--destaque) !important;
+  font-size: 0.88rem !important;
+}
+
+body.tema-buriti-laguna .breadcrumb a .fa-home,
+body.tema-buriti-laguna td.fundoLocalizacao .fa-home {
+  margin-right: 4px;
+  color: var(--cor);
+}
+
+body.tema-buriti-laguna .breadcrumb .breadcrumb-current,
+body.tema-buriti-laguna .breadcrumb .breadcrumb-separator,
+body.tema-buriti-laguna .breadcrumb .breadcrumb-current:hover,
+body.tema-buriti-laguna .breadcrumb .breadcrumb-separator:hover {
+  color: var(--suave) !important;
+  font-weight: 600 !important;
+}
+
+/* —— Conteúdo / superfícies —— */
+body.tema-buriti-laguna .ieducar-container {
+  background: var(--fundo);
+}
+
+body.tema-buriti-laguna .ieducar-main-content,
+body.tema-buriti-laguna #corpo,
+body.tema-buriti-laguna .ieducar-content,
+body.tema-buriti-laguna .ieducar-main {
+  background: var(--fundo);
+}
+
+body.tema-buriti-laguna .ieducar-main-content {
+  padding: 8px 20px 24px;
+}
+
+body.tema-buriti-laguna #corpo {
+  padding: 4px 12px 20px;
+}
+
+/* Cards / blocos comuns (legado + buriti) */
+body.tema-buriti-laguna .bloco,
+body.tema-buriti-laguna .card,
+body.tema-buriti-laguna .panel,
+body.tema-buriti-laguna .box,
+body.tema-buriti-laguna .form-panel,
+body.tema-buriti-laguna .kpi,
+body.tema-buriti-laguna .numeros article,
+body.tema-buriti-laguna .modulo-card {
+  background: var(--superficie) !important;
+  border: 1px solid var(--linha);
+  border-radius: 14px;
+  box-shadow: var(--sombra-leve);
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+body.tema-buriti-laguna table.tablelistagem,
+body.tema-buriti-laguna table.tablecadastro,
+body.tema-buriti-laguna table.tableDetalhe,
+body.tema-buriti-laguna table.tablelist,
+body.tema-buriti-laguna table.styled {
+  background: var(--superficie);
+  border: 1px solid var(--linha);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--sombra-leve);
+}
+
+body.tema-buriti-laguna table.tablelist th,
+body.tema-buriti-laguna table.styled th,
+body.tema-buriti-laguna .tablelist th,
+body.tema-buriti-laguna .tablelistagem .formdktd,
+body.tema-buriti-laguna .tablecadastro .formdktd {
+  background: var(--clara) !important;
+  color: var(--cor) !important;
+  border-color: var(--linha) !important;
+  font-weight: 800;
+}
+
+body.tema-buriti-laguna .tablelistagem .formmdtd,
+body.tema-buriti-laguna .tablelistagem .formlttd,
+body.tema-buriti-laguna .tablecadastro .formmdtd,
+body.tema-buriti-laguna .tablecadastro .formlttd {
+  background: var(--superficie) !important;
+  color: var(--tinta) !important;
+}
+
+/* —— Controles —— */
+body.tema-buriti-laguna .btn-green,
+body.tema-buriti-laguna input.btn-green,
+body.tema-buriti-laguna button.btn-green,
+body.tema-buriti-laguna .btn_small,
+body.tema-buriti-laguna input[type="submit"].btnb,
+body.tema-buriti-laguna input[type="submit"],
+body.tema-buriti-laguna .botao,
+body.tema-buriti-laguna .bar-buttons .button.primary,
+body.tema-buriti-laguna a.button.primary {
+  background: var(--destaque) !important;
+  border-color: var(--destaque) !important;
+  border-radius: var(--raio-sm) !important;
+  font-family: var(--fonte);
+  font-weight: 700;
+  color: #fff !important;
+  box-shadow: var(--sombra-leve);
+}
+
+body.tema-buriti-laguna .btn-green:hover,
+body.tema-buriti-laguna input[type="submit"]:hover,
+body.tema-buriti-laguna .botao:hover {
+  background: var(--cor) !important;
+  border-color: var(--cor) !important;
+}
+
+body.tema-buriti-laguna input[type="text"],
+body.tema-buriti-laguna input[type="password"],
+body.tema-buriti-laguna input[type="email"],
+body.tema-buriti-laguna input[type="number"],
+body.tema-buriti-laguna input[type="search"],
+body.tema-buriti-laguna select,
+body.tema-buriti-laguna textarea {
+  border: 1px solid var(--linha);
+  border-radius: var(--raio-sm);
+  background: var(--superficie);
+}
+
+body.tema-buriti-laguna input:focus,
+body.tema-buriti-laguna select:focus,
+body.tema-buriti-laguna textarea:focus {
+  outline: none;
+  border-color: var(--destaque);
+  box-shadow: var(--foco);
+}
+
+/* —— Rodapé —— */
+body.tema-buriti-laguna .ieducar-footer,
+body.tema-buriti-laguna tr.rodape td {
+  background: var(--cor) !important;
+  color: #d7e4ec !important;
+  border-top: 3px solid var(--acento);
+  padding: 10px 18px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  height: auto;
+}
+
+body.tema-buriti-laguna .ieducar-footer a,
+body.tema-buriti-laguna tr.rodape a {
+  color: #9ec9db !important;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+body.tema-buriti-laguna .ieducar-footer a:hover {
+  text-decoration: underline;
+}
+
+/* —— Shell legado em tabela —— */
+body.tema-buriti-laguna table.tabelanum1,
+body.tema-buriti-laguna table.tabelanum2 {
+  background: transparent;
+  width: 100%;
+}
+
+body.tema-buriti-laguna tr.topo td {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+body.tema-buriti-laguna #tablenum1 {
+  background: var(--fundo);
+}

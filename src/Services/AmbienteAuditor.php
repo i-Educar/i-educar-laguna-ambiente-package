@@ -41,6 +41,11 @@ final class AmbienteAuditor
                 $avisos++;
             }
 
+            $adminUrl = $mod['admin_url'] ?? null;
+            if (($adminUrl === null || $adminUrl === '') && ! empty($mod['rotas'][0]) && ! str_starts_with((string) $mod['rotas'][0], '/api/')) {
+                $adminUrl = $mod['rotas'][0];
+            }
+
             $modulos[] = [
                 'id' => $mod['id'],
                 'tr' => $mod['tr'],
@@ -49,6 +54,9 @@ final class AmbienteAuditor
                 'composer' => $mod['composer'],
                 'ok' => $ok,
                 'checks' => $checks,
+                'cor' => $mod['cor'] ?? '#5b6b76',
+                'icone' => $mod['icone'] ?? 'fa-cube',
+                'admin_url' => $adminUrl,
             ];
         }
 

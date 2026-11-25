@@ -14,7 +14,9 @@ final class Identidade
 
     public const NOME = 'Ambiente Laguna';
 
-    /** @return array{cor:string,destaque:string,clara:string,icone:string,nome:string} */
+    public const DESCRICAO = 'Saúde e configuração do ensaio da rede';
+
+    /** @return array{cor:string,destaque:string,clara:string,icone:string,nome:string,descricao:string} */
     public static function tokens(): array
     {
         return [
@@ -23,6 +25,7 @@ final class Identidade
             'clara' => self::COR_CLARA,
             'icone' => self::ICONE,
             'nome' => self::NOME,
+            'descricao' => self::DESCRICAO,
         ];
     }
 }
