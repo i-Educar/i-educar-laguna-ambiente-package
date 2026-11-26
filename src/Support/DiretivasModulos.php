@@ -133,8 +133,8 @@ final class DiretivasModulos
                 'prefixos_rota' => ['transporte-escolar'],
             ],
             'alimentacao' => [
-                'guia' => 'Ajuste lanches/jantar e o responsável técnico (CRN). O cardápio e as bandejas seguem estas regras na rede.',
-                'diretivas' => [
+                'guia' => 'Ajuste lanches/jantar, o responsável técnico (CRN) e o setor da SME. O cardápio e o botão «i» de informes usam estes dados.',
+                'diretivas' => array_merge([
                     self::ativo(),
                     [
                         'chave' => 'lanches_por_dia',
@@ -209,7 +209,7 @@ final class DiretivasModulos
                         'rotulo' => 'RT — nome',
                         'tipo' => 'string',
                         'config' => 'alimentacao.rt_nome',
-                        'padrao' => '',
+                        'padrao' => 'Nutricionista responsável (PoC Laguna)',
                         'maxlength' => 120,
                         'grupo' => 'setor',
                         'ajuda' => 'Nutricionista responsável técnico pela alimentação escolar.',
@@ -221,7 +221,7 @@ final class DiretivasModulos
                         'rotulo' => 'RT — registro (CRN)',
                         'tipo' => 'string',
                         'config' => 'alimentacao.rt_registro',
-                        'padrao' => '',
+                        'padrao' => 'CRN-10 0000',
                         'maxlength' => 40,
                         'grupo' => 'setor',
                         'ajuda' => 'Número do Conselho Regional de Nutricionistas (ex.: CRN-10 1234).',
@@ -243,12 +243,26 @@ final class DiretivasModulos
                         'rotulo' => 'RT — e-mail',
                         'tipo' => 'email',
                         'config' => 'alimentacao.rt_email',
-                        'padrao' => '',
+                        'padrao' => 'alimentacao@laguna.sc.gov.br',
                         'maxlength' => 120,
                         'grupo' => 'setor',
                         'placeholder' => 'nutricao@municipio.gov.br',
                     ],
-                ],
+                ], array_map(static function (array $d): array {
+                    $padroes = [
+                        'setor_nome' => 'Setor de Alimentação Escolar / Nutrição',
+                        'setor_endereco' => 'SME Laguna — Nutrição / Alimentação Escolar',
+                        'setor_horario' => 'Seg a sex, 8h–12h e 13h30–17h',
+                        'setor_telefone' => '(48) 3644-4000',
+                        'setor_email' => 'alimentacao@laguna.sc.gov.br',
+                        'setor_observacao' => 'Dúvidas de cardápio e restrições alimentares: procure o setor de Nutrição com laudo médico.',
+                    ];
+                    if (isset($padroes[$d['chave']])) {
+                        $d['padrao'] = $padroes[$d['chave']];
+                    }
+
+                    return $d;
+                }, SetorResponsavel::diretivas())),
                 'impactos_desativar' => [
                     'Cardápios, remessa e controle de merenda ficam offline.',
                     'Escolas deixam de registrar consumo no módulo.',

@@ -666,10 +666,10 @@ final class ModuloConfiguracao
             && class_exists(\iEducar\Packages\BuritiAlimentacaoEscolar\Services\ConfigAlimentacao::class)) {
             try {
                 $cfg = \iEducar\Packages\BuritiAlimentacaoEscolar\Services\ConfigAlimentacao::class;
-                $rt = method_exists($cfg, 'responsavelTecnico') ? $cfg::responsavelTecnico() : [];
+                $rt = method_exists($cfg, 'responsavelTecnico') ? ($cfg::responsavelTecnico() ?? []) : [];
                 $slots = $cfg::slotsAtivos();
 
-                return [
+                $out = [
                     'lanches_por_dia' => (int) $cfg::get('lanches_por_dia', 2),
                     'incluir_jantar' => in_array('jantar', $slots, true),
                     'montar_cardapio' => (bool) $cfg::get('montar_cardapio', true),
@@ -678,11 +678,17 @@ final class ModuloConfiguracao
                     'unidade_so_registra_fatos' => (bool) $cfg::get('unidade_so_registra_fatos', true),
                     'alerta_horario_turma' => (bool) $cfg::get('alerta_horario_turma', true),
                     'porcoes_padrao' => (int) $cfg::get('porcoes_padrao', 100),
-                    'rt_nome' => (string) ($rt['nome'] ?? ''),
-                    'rt_registro' => (string) ($rt['registro'] ?? ''),
-                    'rt_cargo' => (string) ($rt['cargo'] ?? 'Nutricionista responsável técnico'),
-                    'rt_email' => (string) ($rt['email'] ?? ''),
                 ];
+                // Só espelha RT quando houver valor — senão o painel cai no config/padrão PoC.
+                $rtNome = trim((string) ($rt['nome'] ?? ''));
+                if ($rtNome !== '') {
+                    $out['rt_nome'] = $rtNome;
+                    $out['rt_registro'] = (string) ($rt['registro'] ?? '');
+                    $out['rt_cargo'] = (string) ($rt['cargo'] ?? 'Nutricionista responsável técnico');
+                    $out['rt_email'] = (string) ($rt['email'] ?? '');
+                }
+
+                return $out;
             } catch (Throwable) {
                 return [];
             }
