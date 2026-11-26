@@ -277,7 +277,21 @@ final class DiretivasModulos
                 'guia' => 'Módulo operacional de estoque. Em geral basta mantê-lo ativo; pedidos e assinaturas ficam nas telas do próprio almoxarifado. Informe o setor responsável para aparecer o botão «i» de informes.',
                 'diretivas' => array_merge([
                     self::ativo(),
-                ], SetorResponsavel::diretivas()),
+                ], array_map(static function (array $d): array {
+                    $padroes = [
+                        'setor_nome' => 'Setor de Almoxarifado Escolar',
+                        'setor_endereco' => 'SME Laguna — Almoxarifado / Suprimentos',
+                        'setor_horario' => 'Seg a sex, 8h–12h e 13h30–17h',
+                        'setor_telefone' => '(48) 3644-4100',
+                        'setor_email' => 'almoxarifado@laguna.sc.gov.br',
+                        'setor_observacao' => 'Pedidos pela unidade escolar. Retirada/entrega conforme protocolo do pedido.',
+                    ];
+                    if (isset($padroes[$d['chave']])) {
+                        $d['padrao'] = $padroes[$d['chave']];
+                    }
+
+                    return $d;
+                }, SetorResponsavel::diretivas())),
                 'impactos_desativar' => [
                     'Pedidos de material e movimentação de estoque ficam bloqueados.',
                     'Pedidos já abertos não avançam no fluxo de assinaturas.',
