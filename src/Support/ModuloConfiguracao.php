@@ -175,19 +175,20 @@ final class ModuloConfiguracao
                 $chave = $d['chave'];
                 if ($chave === 'ativo') {
                     $valor = $ativo;
-                } elseif (array_key_exists($chave, $salvas)) {
+                } elseif (array_key_exists($chave, $salvas) && ! self::ehVazioConfig($salvas[$chave])) {
                     $valor = $salvas[$chave];
-                } elseif (array_key_exists($chave, $dominio)) {
+                } elseif (array_key_exists($chave, $dominio) && ! self::ehVazioConfig($dominio[$chave])) {
                     $valor = $dominio[$chave];
                 } elseif (! empty($d['config'])) {
-                    $valor = config((string) $d['config'], $d['padrao']);
+                    $cfg = config((string) $d['config'], $d['padrao']);
+                    $valor = ! self::ehVazioConfig($cfg) ? $cfg : ($d['padrao'] ?? null);
                 } else {
-                    $valor = $d['padrao'];
+                    $valor = $d['padrao'] ?? null;
                 }
                 if (! empty($d['essencial'])) {
                     $temEssenciais = true;
-                    $vazio = $valor === null || $valor === '' || $valor === false;
-                    if ($vazio) {
+                    // false (bool) é valor válido; só string vazia / null pendem contato
+                    if ($valor === null || $valor === '') {
                         $essenciaisPendentes++;
                     }
                 }
@@ -853,6 +854,12 @@ final class ModuloConfiguracao
             } catch (Throwable) {
             }
         }
+    }
+
+    /** String vazia / null = “não configurado” (cai no padrão PoC). Bool/número contam. */
+    private static function ehVazioConfig(mixed $valor): bool
+    {
+        return $valor === null || $valor === '';
     }
 
     private static function truthy(mixed $valor): bool
