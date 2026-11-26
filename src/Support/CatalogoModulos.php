@@ -341,6 +341,22 @@ final class CatalogoModulos
                 'cor' => '#7f1d1d',
                 'icone' => 'fa-shield',
             ],
+            [
+                'id' => 'assinatura',
+                'tr' => '5.3.87',
+                'nome' => 'Assinatura digital',
+                'composer' => 'buriti/i-educar-assinatura-digital-package',
+                'nivel' => 'recomendado',
+                'provider' => 'iEducar\\Packages\\BuritiAssinaturaDigital\\Providers\\AssinaturaDigitalServiceProvider',
+                'path' => 'packages/buriti/i-educar-assinatura-digital-package',
+                'schemas' => ['assinatura_digital'],
+                'processos' => [881700, 881701, 881702, 881703],
+                'comandos' => ['assinatura:teste'],
+                'rotas' => ['/assinatura-digital'],
+                'admin_url' => '/assinatura-digital',
+                'cor' => '#0f4c5c',
+                'icone' => 'fa-pencil-square-o',
+            ],
         ];
     }
 
