@@ -482,7 +482,21 @@ final class DiretivasModulos
                 'guia' => 'Informe o setor da SME que recebe e classifica os chamados da rede (escola → secretaria).',
                 'diretivas' => array_merge([
                     self::ativo(),
-                ], SetorResponsavel::diretivas()),
+                ], array_map(static function (array $d): array {
+                    $padroes = [
+                        'setor_nome' => 'Central de Chamados / Solicitação de Serviços',
+                        'setor_endereco' => 'SME Laguna — Central de Serviços',
+                        'setor_horario' => 'Seg a sex, 8h–12h e 13h30–17h',
+                        'setor_telefone' => '(48) 3644-4500',
+                        'setor_email' => 'chamados@laguna.sc.gov.br',
+                        'setor_observacao' => 'Abra o chamado pela unidade escolar. Acompanhe o protocolo no módulo de Chamados.',
+                    ];
+                    if (isset($padroes[$d['chave']])) {
+                        $d['padrao'] = $padroes[$d['chave']];
+                    }
+
+                    return $d;
+                }, SetorResponsavel::diretivas())),
                 'impactos_desativar' => [
                     'Abertura e trâmite de chamados da rede ficam indisponíveis.',
                     'SLA e auditoria de pedidos deixam de ser consultáveis pelo módulo.',
