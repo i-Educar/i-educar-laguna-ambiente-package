@@ -12,11 +12,13 @@ return [
     ],
 
     /*
-    | Tema visual Buriti (onda 1) — tokens + skin-core no core i-Educar.
-    | Prioridade: settings (laguna-ambiente.tema.ativo) > BURITI_TEMA_ATIVO.
+    | Skins visuais municipais — tokens + paletas + skin-core no i-Educar / i-Diário.
+    | Prioridade: settings (laguna-ambiente.tema.skin) > BURITI_TEMA_SKIN > ativo legado.
+    | Ids: nenhum | buriti | ebano | horizonte | orbita | litoral
     */
     'tema' => [
         'ativo' => filter_var(env('BURITI_TEMA_ATIVO', false), FILTER_VALIDATE_BOOLEAN),
+        'skin' => env('BURITI_TEMA_SKIN', filter_var(env('BURITI_TEMA_ATIVO', false), FILTER_VALIDATE_BOOLEAN) ? 'buriti' : 'nenhum'),
     ],
 
 ];

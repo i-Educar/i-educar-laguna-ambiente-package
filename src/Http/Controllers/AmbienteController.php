@@ -4,7 +4,10 @@ namespace iEducar\Packages\BuritiLagunaAmbiente\Http\Controllers;
 
 use App\User;
 use iEducar\Packages\BuritiLagunaAmbiente\Services\AmbienteAuditor;
+use iEducar\Packages\BuritiLagunaAmbiente\Services\LagunaModuloTestesService;
 use iEducar\Packages\BuritiLagunaAmbiente\Services\LagunaSetupService;
+use iEducar\Packages\BuritiLagunaAmbiente\Services\LagunaSimulacaoPessoasService;
+use iEducar\Packages\BuritiLagunaAmbiente\Support\AprovacaoModulo;
 use iEducar\Packages\BuritiLagunaAmbiente\Support\CatalogoModulos;
 use iEducar\Packages\BuritiLagunaAmbiente\Support\TemaBuriti;
 use Illuminate\Http\RedirectResponse;
@@ -21,21 +24,91 @@ class AmbienteController
         return view('laguna-ambiente::painel', [
             'relatorio' => $relatorio,
             'appsApi' => $this->snapshotAppsApi($relatorio),
-            'atalhosModulos' => $this->atalhosModulos(),
         ]);
     }
 
-    public function check(AmbienteAuditor $auditor): View
+    public function check(AmbienteAuditor $auditor, LagunaModuloTestesService $testes): View
     {
+        $relatorio = $auditor->auditar();
+        $ultimoTeste = $testes->ultimo();
+        $testePorId = [];
+        foreach ($ultimoTeste['itens'] ?? [] as $item) {
+            $testePorId[(string) ($item['id'] ?? '')] = $item;
+        }
+
         return view('laguna-ambiente::check', [
-            'relatorio' => $auditor->auditar(),
-            'appsApi' => $this->snapshotAppsApi(),
+            'relatorio' => $relatorio,
+            'appsApi' => $this->snapshotAppsApi($relatorio),
+            'statusAprovacao' => AprovacaoModulo::statusValidos(),
+            'ultimoTeste' => $ultimoTeste,
+            'testePorId' => $testePorId,
+            'pendencias' => $testes->pendencias($relatorio),
         ]);
     }
 
-    public function setupForm(): View
+    public function testarModulos(Request $request, LagunaModuloTestesService $testes): RedirectResponse
     {
-        return view('laguna-ambiente::setup');
+        $data = $request->validate([
+            'modulo_id' => 'nullable|string|max:80',
+        ]);
+
+        $moduloId = trim((string) ($data['modulo_id'] ?? ''));
+        if ($moduloId !== '') {
+            $ids = array_column(CatalogoModulos::todos(), 'id');
+            if (! in_array($moduloId, $ids, true)) {
+                return redirect('/laguna-ambiente/check')
+                    ->with('erro', 'Módulo inválido para teste.');
+            }
+        }
+
+        @set_time_limit(0);
+        $resultado = $testes->executar($moduloId !== '' ? $moduloId : null);
+        $resumo = $resultado['resumo'] ?? ['ok' => 0, 'falha' => 0, 'skip' => 0, 'total' => 0];
+
+        $msg = $moduloId !== ''
+            ? 'Testes de «'.$moduloId.'»: '.$resumo['ok'].' ok, '.$resumo['falha'].' falha(s), '.$resumo['skip'].' sem script.'
+            : 'Testes atualizados: '.$resumo['ok'].' ok, '.$resumo['falha'].' falha(s), '.$resumo['skip'].' sem script ('.$resumo['total'].' módulos).';
+
+        $redirect = $moduloId !== ''
+            ? '/laguna-ambiente/check?mod='.$moduloId.'#pendencias'
+            : '/laguna-ambiente/check#pendencias';
+
+        return redirect($redirect)
+            ->with(($resumo['falha'] ?? 0) > 0 ? 'erro' : 'ok', $msg)
+            ->with('teste_resumo', $resumo);
+    }
+
+    public function aprovarModulo(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'modulo_id' => 'required|string|max:80',
+            'status' => 'required|string|in:'.implode(',', AprovacaoModulo::statusValidos()),
+            'nota' => 'nullable|string|max:500',
+        ]);
+
+        $ids = array_column(CatalogoModulos::todos(), 'id');
+        if (! in_array($data['modulo_id'], $ids, true)) {
+            return redirect('/laguna-ambiente/check')
+                ->with('erro', 'Módulo inválido para aprovação.');
+        }
+
+        AprovacaoModulo::gravar(
+            $data['modulo_id'],
+            $data['status'],
+            (string) ($data['nota'] ?? ''),
+        );
+
+        $meta = AprovacaoModulo::meta($data['status']);
+
+        return redirect('/laguna-ambiente/check?mod='.$data['modulo_id'])
+            ->with('ok', 'Aprovação de «'.$data['modulo_id'].'» atualizada: '.$meta['rotulo'].'.');
+    }
+
+    public function setupForm(LagunaSimulacaoPessoasService $sim): View
+    {
+        return view('laguna-ambiente::setup', [
+            'simulacao' => $sim->ultimoLote(),
+        ]);
     }
 
     public function setupRun(Request $request, LagunaSetupService $setup): RedirectResponse
@@ -48,21 +121,47 @@ class AmbienteController
         $passos = $setup->executar(
             comSetupMunicipal: ! $request->boolean('skip_municipal'),
             comMatriculas: ! $request->boolean('skip_matriculas'),
+            comSimulacaoPessoas: ! $request->boolean('skip_simulacao'),
         );
 
         $ok = count(array_filter($passos, static fn ($p) => $p['ok'])) === count($passos);
 
-        return redirect('/laguna-ambiente/check')
+        return redirect('/laguna-ambiente/simulacao')
             ->with($ok ? 'ok' : 'erro', $ok
-                ? 'Setup executado. Confira a auditoria abaixo.'
-                : 'Setup parcial — veja falhas no histórico do comando ou rode laguna:setup no terminal.')
+                ? 'Setup + simulação executados. Dados persistidos para verificação.'
+                : 'Setup parcial — confira os passos e a simulação abaixo.')
             ->with('passos', $passos);
+    }
+
+    public function simulacaoForm(LagunaSimulacaoPessoasService $sim): View
+    {
+        return view('laguna-ambiente::simulacao', [
+            'dados' => $sim->ultimoLote(),
+            'passos' => session('passos', []),
+        ]);
+    }
+
+    public function simulacaoRun(Request $request, LagunaSimulacaoPessoasService $sim): RedirectResponse
+    {
+        if (App::environment('production') && ! $request->boolean('force_production')) {
+            return redirect('/laguna-ambiente/simulacao')
+                ->with('erro', 'Recusado em production. Marque force ou use homologação.');
+        }
+
+        $qtd = max(1, min(40, (int) $request->input('qtd', 20)));
+        $resultado = $sim->executar($qtd);
+
+        return redirect('/laguna-ambiente/simulacao')
+            ->with($resultado['ok'] ? 'ok' : 'erro', $resultado['saida'])
+            ->with('resultado', $resultado);
     }
 
     public function temaForm(): View
     {
         return view('laguna-ambiente::tema', [
             'ativo' => TemaBuriti::ativo(),
+            'skinAtual' => TemaBuriti::skinId(),
+            'skins' => TemaBuriti::catalogo(),
         ]);
     }
 
@@ -98,13 +197,17 @@ class AmbienteController
 
     public function temaSalvar(Request $request): RedirectResponse
     {
-        $ativo = $request->boolean('ativo');
-        TemaBuriti::salvar($ativo);
+        $skin = (string) $request->input('skin', '');
+        if ($skin === '' && $request->has('ativo')) {
+            $skin = $request->boolean('ativo') ? 'buriti' : TemaBuriti::SKIN_NENHUM;
+        }
+        TemaBuriti::salvar($skin !== '' ? $skin : TemaBuriti::SKIN_NENHUM);
+        $nome = TemaBuriti::catalogo()[TemaBuriti::skinId()]['nome'] ?? TemaBuriti::skinId();
 
         return redirect('/laguna-ambiente/tema')
-            ->with('ok', $ativo
-                ? 'Tema Buriti ativado no i-Educar e no i-Diário. Recarregue as telas abertas.'
-                : 'Tema Buriti desativado no i-Educar e no i-Diário.');
+            ->with('ok', TemaBuriti::ativo()
+                ? "Skin «{$nome}» aplicada no i-Educar e no i-Diário. Recarregue as telas abertas."
+                : 'Skin municipal desativada — chrome padrão Portabilis restaurado.');
     }
 
     /**
@@ -156,61 +259,4 @@ class AmbienteController
         }
     }
 
-    /**
-     * @return list<array{nome:string,url:string,icone:string,meta:string}>
-     */
-    private function atalhosModulos(): array
-    {
-        $icones = [
-            'apps-api' => 'fa-mobile',
-            'alimentacao' => 'fa-cutlery',
-            'transporte' => 'fa-bus',
-            'almoxarifado' => 'fa-archive',
-            'atendimento' => 'fa-heartbeat',
-            'eventos' => 'fa-calendar',
-            'biblioteca' => 'fa-book',
-            'horario' => 'fa-clock-o',
-            'solicitacao' => 'fa-ticket',
-            'act' => 'fa-briefcase',
-        ];
-
-        $out = [];
-        foreach (CatalogoModulos::todos() as $mod) {
-            $url = $mod['admin_url'] ?? (($mod['rotas'][0] ?? null) && ! str_starts_with((string) $mod['rotas'][0], '/api/')
-                ? $mod['rotas'][0]
-                : null);
-            if ($url === null || $url === '') {
-                continue;
-            }
-            if (! in_array($mod['id'], ['apps-api', 'alimentacao', 'transporte', 'almoxarifado', 'atendimento', 'eventos', 'biblioteca', 'horario', 'solicitacao', 'act'], true)
-                && empty($mod['admin_url'])) {
-                continue;
-            }
-            $out[] = [
-                'nome' => $mod['nome'],
-                'url' => url($url),
-                'icone' => $icones[$mod['id']] ?? 'fa-cube',
-                'meta' => 'TR '.$mod['tr'],
-            ];
-        }
-
-        // Apps API sempre em destaque no painel Laguna
-        $temApps = false;
-        foreach ($out as $a) {
-            if (str_contains($a['url'], '/apps-api')) {
-                $temApps = true;
-                break;
-            }
-        }
-        if (! $temApps) {
-            array_unshift($out, [
-                'nome' => 'Apps API',
-                'url' => url('/apps-api/configuracao'),
-                'icone' => 'fa-mobile',
-                'meta' => 'TR 5.13+5.14',
-            ]);
-        }
-
-        return $out;
-    }
 }

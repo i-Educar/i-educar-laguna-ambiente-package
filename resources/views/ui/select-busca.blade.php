@@ -1,4 +1,4 @@
-{{-- Seletor único com campo de busca (educação / pouco TI) --}}
+{{-- Seletor com busca. Em filtros: compacto=true (dropdown fino, sem lista aberta). --}}
 @php
     $campo = $campo ?? 'id';
     $rotulo = $rotulo ?? 'Selecionar';
@@ -6,23 +6,29 @@
     $opcoes = $opcoes ?? [];
     $selecionado = $selecionado ?? null;
     $placeholder = $placeholder ?? 'Digite para encontrar…';
-    $vazio = $vazio ?? '— escolher na lista —';
+    $vazio = $vazio ?? '— escolher —';
     $ajuda = $ajuda ?? null;
-    $multiplo = false;
-    $uid = 'sb-'.preg_replace('/[^a-z0-9]+/', '-', strtolower((string) $campo)).'-'.substr(md5($campo.$rotulo.'1'), 0, 6);
+    $compacto = ! empty($compacto) || ! empty($filtro);
+    $colWide = ! empty($colWide);
+    $tamanho = $compacto ? 1 : (int) ($tamanho ?? 6);
+    $mostrarAjuda = is_string($ajuda) && $ajuda !== '' && ! $compacto;
+    $mostrarBusca = ! $compacto || count($opcoes) > 12;
+    $uid = 'sb-'.preg_replace('/[^a-z0-9]+/', '-', strtolower((string) $campo)).'-'.substr(md5($campo.$rotulo.(string) $compacto), 0, 6);
 @endphp
-<label class="buriti-select {{ !empty($colWide) || ($colWide ?? true) ? 'col-wide' : '' }}">
+<label class="buriti-select {{ $compacto ? 'buriti-select--compacto' : '' }} {{ $colWide ? 'col-wide' : '' }}">
     <span class="buriti-select-rotulo">@if(!empty($icone))<i class="fa {{ $icone }}"></i> @endif{{ $rotulo }}@if($obrigatorio) * @endif</span>
-    <input type="search"
-           class="buriti-select-busca"
-           placeholder="{{ $placeholder }}"
-           data-for="{{ $uid }}"
-           autocomplete="off"
-           aria-label="Buscar em {{ $rotulo }}">
+    @if($mostrarBusca)
+        <input type="search"
+               class="buriti-select-busca"
+               placeholder="{{ $placeholder }}"
+               data-for="{{ $uid }}"
+               autocomplete="off"
+               aria-label="Buscar em {{ $rotulo }}">
+    @endif
     <select name="{{ $campo }}"
             id="{{ $id ?? $uid }}"
             class="buriti-select-lista"
-            size="{{ (int) ($tamanho ?? 7) }}"
+            @if(! $compacto) size="{{ $tamanho }}" @endif
             @if($obrigatorio) required @endif
             @if(!empty($onchange)) onchange="{{ $onchange }}" @endif
             {!! $attrs ?? '' !!}>
@@ -47,7 +53,7 @@
             </option>
         @endforeach
     </select>
-    <small class="buriti-select-ajuda">
-        {{ $ajuda ?? ('Digite para filtrar · '.count($opcoes).' opção(ões). Use o mouse ou as setas para escolher.') }}
-    </small>
+    @if($mostrarAjuda)
+        <small class="buriti-select-ajuda">{{ $ajuda }}</small>
+    @endif
 </label>

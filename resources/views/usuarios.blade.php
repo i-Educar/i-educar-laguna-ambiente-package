@@ -83,7 +83,7 @@
                         <td>{{ $u['nome'] ?? '—' }}</td>
                         <td>{{ $u['motivo'] ?? '—' }}</td>
                         <td>{{ $u['suspenso_por'] ?? '—' }}</td>
-                        <td>{{ $u['suspenso_em'] ?? $u['atualizado'] ?? '—' }}</td>
+                        <td>{{ \iEducar\Packages\BuritiLagunaAmbiente\Support\DataHora::formatar($u['suspenso_em'] ?? $u['atualizado'] ?? null) }}</td>
                         <td>
                             <form method="post" action="{{ url('/apps-api/governanca/usuarios/'.$u['id'].'/reativar') }}">
                                 @csrf
@@ -110,7 +110,7 @@
                 <tbody>
                 @foreach($historico as $h)
                     <tr>
-                        <td>{{ $h['created_at'] ?? '—' }}</td>
+                        <td>{{ \iEducar\Packages\BuritiLagunaAmbiente\Support\DataHora::formatar($h['created_at'] ?? null) }}</td>
                         <td><span class="badge {{ str_contains($h['acao'], 'suspender') || str_contains($h['acao'], 'bloquear') || str_contains($h['acao'], 'revogar') ? 'fail' : 'ok' }}">{{ $h['acao'] }}</span></td>
                         <td>{{ $h['ator_login'] ?? '—' }}</td>
                         <td>{{ $h['alvo_login'] ?? '—' }}</td>

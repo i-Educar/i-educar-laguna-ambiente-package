@@ -42,7 +42,8 @@ class LagunaPovoarCidadeCommand extends Command
         }
 
         $this->info('Povoamento Laguna concluído.');
-        $this->line('Logins PoC (senha=CPF): 42091020001 admin · 42091020003 diretor · 42091020014 busca ativa · 42091020015 assistência · 42091020010 chamados · 42091020009 atendimento.');
+        $this->line('Cenários: ausências, ACT diversos, alimentação semanal, almoxarifado, vagas pré-matrícula e transporte.');
+        $this->line('Logins PoC (senha=CPF): 42091020001 admin · 42091020003 diretor · 42091020014 busca ativa · 42091020010 chamados · 42091020009 atendimento · 42091020011 RH.');
 
         return self::SUCCESS;
     }

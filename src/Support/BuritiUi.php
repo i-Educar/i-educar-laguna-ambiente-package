@@ -2,6 +2,7 @@
 
 namespace iEducar\Packages\BuritiLagunaAmbiente\Support;
 
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\View;
 
 /**
@@ -9,6 +10,8 @@ use Illuminate\Support\Facades\View;
  */
 final class BuritiUi
 {
+    private static bool $diretivasData = false;
+
     public static function registrar(): void
     {
         $path = dirname(__DIR__, 2).'/resources/views/ui';
@@ -16,6 +19,24 @@ final class BuritiUi
             return;
         }
         View::addNamespace('buriti-ui', $path);
+
+        DataHora::garantirLocaleCarbon();
+        self::registrarDiretivasData();
+    }
+
+    /** @data / @dataAbs / @soData / @dataCompleta — padrão PT-BR humanizado. */
+    private static function registrarDiretivasData(): void
+    {
+        if (self::$diretivasData) {
+            return;
+        }
+        self::$diretivasData = true;
+
+        $cls = DataHora::class;
+        Blade::directive('data', static fn ($expression): string => "<?php echo \\{$cls}::formatar({$expression}); ?>");
+        Blade::directive('dataAbs', static fn ($expression): string => "<?php echo \\{$cls}::absoluto({$expression}); ?>");
+        Blade::directive('soData', static fn ($expression): string => "<?php echo \\{$cls}::data({$expression}); ?>");
+        Blade::directive('dataCompleta', static fn ($expression): string => "<?php echo \\{$cls}::completo({$expression}); ?>");
     }
 
     /**

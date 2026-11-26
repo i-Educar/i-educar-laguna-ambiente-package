@@ -26,10 +26,16 @@ Declarado em `composer.json` → `extra.ieducar` e `extra.idiario`.
 
 ```bash
 php artisan laguna:check              # audita módulos / schemas / menus / cmds
-php artisan laguna:setup              # povoa setup + demos
+php artisan laguna:setup              # povoa setup + demos + simulação
 php artisan laguna:ensaiar            # check → setup → recheck
-php artisan laguna:setup --skip-municipal --skip-matriculas
+php artisan laguna:povoar-cidade      # cidade média (escolas/turmas/atores)
+php artisan laguna:simular-pessoas    # 20 pessoas multi-módulo
+php artisan laguna:idiario            # vínculos i-Diário
+php artisan laguna:otimizar           # docker/DB/caches Laguna
+php artisan laguna:setup --skip-municipal --skip-matriculas --skip-povoar
 ```
+
+Pipeline detalhado: `packages/buriti/docs/laguna/CARGA-DADOS-AMBIENTE.md` · solução: `…/SOLUCAO-COMPLETA.md` · install: `…/INSTALACAO.md`.
 
 ## UI admin
 
@@ -48,11 +54,7 @@ Alternativa: `BURITI_TEMA_ATIVO=true` no `.env` (o toggle da UI grava `laguna-am
 
 ## O que o setup faz
 
-1. `ieducar:setup default-br` (se o setup-package estiver ativo)
-2. `ieducar:matriculas --force`
-3. `migrate --force`
-4. Demos: alimentação, escolar, exportação, transporte (quando registrados)
-5. Fallback de cardápio + resumo da rede
+Ver `LagunaSetupService` / `CARGA-DADOS-AMBIENTE.md`: setup municipal → migrate → configs → povoar cidade (+ cenários) → metadados Educacenso → demos → i-Diário → simulação 20 pessoas.
 
 ## Instalação no monorepo
 

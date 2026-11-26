@@ -2,44 +2,359 @@
 
 namespace iEducar\Packages\BuritiLagunaAmbiente\Support;
 
-use App\Models\LegacyUserType;
+use App\Menu;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
- * ACL padrão por nível (tela Tipos de usuário / menu_tipo_usuario).
+ * ACL Laguna: tipos de usuário × módulos Buriti / Portabilis.
+ *
+ * Regras práticas:
+ * - Só o tipo Administrador (cod 1) acessa Ambiente Laguna e Configurações → Módulos.
+ * - Operadores recebem apenas os processos do seu domínio.
+ * - Secretário SME recebe a rede, sem ferramentas de ambiente/setup.
  *
  * @phpstan-type Acl array{visualiza:int,cadastra:int,exclui:int}
+ * @phpstan-type Perfil array{
+ *   cod:int,
+ *   nome:string,
+ *   nivel:int,
+ *   desc:string,
+ *   modulos:list<string>|'*',
+ *   excluir_modulos?:list<string>
+ * }
  */
 final class PermissaoMatriz
 {
+    public const int TIPO_ADMIN = 1;
+
+    public const int TIPO_SECRETARIO = 2;
+
+    /** Espelha LegacyUserType::LEVEL_* sem acoplar o smoke test ao app. */
+    private const int NIVEL_ADMIN = 1;
+
+    private const int NIVEL_INSTITUCIONAL = 2;
+
+    private const int NIVEL_ESCOLA = 4;
+
+    private const int NIVEL_BIBLIOTECA = 8;
+
+    /**
+     * Catálogo de tipos Laguna (sentido prático na rede).
+     *
+     * @return list<Perfil>
+     */
+    public static function perfis(): array
+    {
+        return [
+            [
+                'cod' => 1,
+                'nome' => 'Administrador',
+                'nivel' => self::NIVEL_ADMIN,
+                'desc' => 'Acesso total: Ambiente Laguna, flags de módulos e toda a rede',
+                'modulos' => '*',
+            ],
+            [
+                'cod' => 2,
+                'nome' => 'Secretário SME',
+                'nivel' => self::NIVEL_INSTITUCIONAL,
+                'desc' => 'Operação da rede municipal — sem Ambiente Laguna / setup / flags de módulos',
+                'modulos' => '*',
+                'excluir_modulos' => ['laguna-ambiente', 'modulos-config'],
+            ],
+            [
+                'cod' => 3,
+                'nome' => 'Diretor escolar',
+                'nivel' => self::NIVEL_INSTITUCIONAL,
+                'desc' => 'Gestão da unidade: solicitação, atendimento, horários, biblioteca e visão de busca ativa',
+                'modulos' => ['solicitacao', 'atendimento', 'horario', 'biblioteca', 'busca-ativa', 'alimentacao', 'eventos'],
+            ],
+            [
+                'cod' => 4,
+                'nome' => 'Coordenador pedagógico',
+                'nivel' => self::NIVEL_INSTITUCIONAL,
+                'desc' => 'Pedagógico escolar: horários, eventos/formação, atendimento e busca ativa',
+                'modulos' => ['horario', 'eventos', 'atendimento', 'busca-ativa'],
+            ],
+            [
+                'cod' => 5,
+                'nome' => 'Professor',
+                'nivel' => self::NIVEL_ESCOLA,
+                'desc' => 'Docente — consulta de horários, eventos e biblioteca (sem cadastrar)',
+                'modulos' => ['horario', 'eventos', 'biblioteca'],
+            ],
+            [
+                'cod' => 6,
+                'nome' => 'Operador Transporte',
+                'nivel' => self::NIVEL_INSTITUCIONAL,
+                'desc' => 'Rotas, frota, solicitações e custos do transporte escolar',
+                'modulos' => ['transporte'],
+            ],
+            [
+                'cod' => 7,
+                'nome' => 'Operador Alimentação',
+                'nivel' => self::NIVEL_INSTITUCIONAL,
+                'desc' => 'Cardápio, remessa, balanço e restrições alimentares (PNAE)',
+                'modulos' => ['alimentacao'],
+            ],
+            [
+                'cod' => 8,
+                'nome' => 'Operador Almoxarifado',
+                'nivel' => self::NIVEL_INSTITUCIONAL,
+                'desc' => 'Itens, saldos, pedidos e movimentação de estoque escolar',
+                'modulos' => ['almoxarifado'],
+            ],
+            [
+                'cod' => 9,
+                'nome' => 'Atendimento ao estudante',
+                'nivel' => self::NIVEL_INSTITUCIONAL,
+                'desc' => 'Fila, agenda, equipe e acolhimento — com ponte da Busca Ativa',
+                'modulos' => ['atendimento', 'busca-ativa'],
+            ],
+            [
+                'cod' => 10,
+                'nome' => 'Solicitação de serviços',
+                'nivel' => self::NIVEL_INSTITUCIONAL,
+                'desc' => 'Abertura e trâmite de chamados escola ↔ SME',
+                'modulos' => ['solicitacao'],
+            ],
+            [
+                'cod' => 11,
+                'nome' => 'RH / ACT',
+                'nivel' => self::NIVEL_INSTITUCIONAL,
+                'desc' => 'Servidores, lotação, cessoes e processos seletivos ACT',
+                'modulos' => ['servidor', 'act', 'horario', 'eventos'],
+            ],
+            [
+                'cod' => 12,
+                'nome' => 'Quadro de horários',
+                'nivel' => self::NIVEL_INSTITUCIONAL,
+                'desc' => 'Geração, validação e conflitos do quadro de horários',
+                'modulos' => ['horario'],
+            ],
+            [
+                'cod' => 13,
+                'nome' => 'Operador Eventos',
+                'nivel' => self::NIVEL_INSTITUCIONAL,
+                'desc' => 'Eventos, inscrição, presença e certificados de formação',
+                'modulos' => ['eventos'],
+            ],
+            [
+                'cod' => 14,
+                'nome' => 'Busca Ativa',
+                'nivel' => self::NIVEL_INSTITUCIONAL,
+                'desc' => 'Detecção de infrequência, alertas e processos de reintegração',
+                'modulos' => ['busca-ativa', 'atendimento'],
+            ],
+            [
+                'cod' => 15,
+                'nome' => 'Bibliotecário',
+                'nivel' => self::NIVEL_BIBLIOTECA,
+                'desc' => 'Acervo e empréstimos da biblioteca escolar',
+                'modulos' => ['biblioteca'],
+            ],
+            [
+                'cod' => 16,
+                'nome' => 'Pré-matrícula / Vagas',
+                'nivel' => self::NIVEL_INSTITUCIONAL,
+                'desc' => 'Oferta de vagas, inscrição e acompanhamento da pré-matrícula',
+                'modulos' => ['vagas'],
+            ],
+            [
+                'cod' => 17,
+                'nome' => 'Apps / governança API',
+                'nivel' => self::NIVEL_INSTITUCIONAL,
+                'desc' => 'Funções e governança Sanctum dos apps família/professor (sem flags de módulo)',
+                'modulos' => ['apps-api'],
+            ],
+        ];
+    }
+
+    /**
+     * Faixas de processo por módulo (menus Buriti + pré-matrícula + Ambiente Laguna).
+     *
+     * @return array<string, list<int>>
+     */
+    public static function faixasModulo(): array
+    {
+        return [
+            'transporte' => self::faixa(880100, 880199),
+            'alimentacao' => self::faixa(881100, 881199),
+            'almoxarifado' => self::faixa(881400, 881499),
+            // Biblioteca e exportação compartilham a faixa 8815xx no núcleo Laguna.
+            'biblioteca' => self::faixa(881500, 881599),
+            'exportacao' => self::faixa(881500, 881599),
+            'atendimento' => self::faixa(881600, 881699),
+            'solicitacao' => self::faixa(881700, 881799),
+            'horario' => self::faixa(881800, 881899),
+            'eventos' => self::faixa(881900, 881999),
+            'act' => self::faixa(882000, 882099),
+            'apps-api' => self::faixa(882100, 882199),
+            'busca-ativa' => self::faixa(882200, 882299),
+            'servidor' => self::faixa(883000, 883099),
+            'vagas' => [56, 5655, 5656],
+            'censo' => [9998848],
+            'laguna-ambiente' => [
+                Processos::RAIZ,
+                Processos::PAINEL,
+                Processos::CHECK,
+                Processos::SETUP,
+                Processos::TEMA,
+                Processos::USUARIOS,
+            ],
+            'modulos-config' => [Processos::MODULOS],
+        ];
+    }
+
     /**
      * @return Acl
      */
     public static function paraNivel(int $nivel, ?int $codTipo = null): array
     {
-        // Professor (cod 5 Laguna): só visualiza, mesmo em nível escolar.
         if ($codTipo === 5) {
             return ['visualiza' => 1, 'cadastra' => 0, 'exclui' => 0];
         }
 
         return match ($nivel) {
-            LegacyUserType::LEVEL_ADMIN => [
+            self::NIVEL_ADMIN => [
                 'visualiza' => 1,
                 'cadastra' => 1,
-                'exclui' => ($codTipo !== null && $codTipo <= 2) ? 1 : 0,
+                'exclui' => ($codTipo !== null && $codTipo === self::TIPO_ADMIN) ? 1 : 0,
             ],
-            LegacyUserType::LEVEL_INSTITUTIONAL => [
+            self::NIVEL_INSTITUCIONAL => [
                 'visualiza' => 1,
                 'cadastra' => 1,
                 'exclui' => 0,
             ],
-            LegacyUserType::LEVEL_SCHOOLING,
-            LegacyUserType::LEVEL_LIBRARY => [
+            self::NIVEL_ESCOLA,
+            self::NIVEL_BIBLIOTECA => [
                 'visualiza' => 1,
-                'cadastra' => 0,
+                'cadastra' => $codTipo === 15 ? 1 : 0,
                 'exclui' => 0,
             ],
             default => ['visualiza' => 1, 'cadastra' => 0, 'exclui' => 0],
         };
+    }
+
+    /**
+     * Garante tipos Laguna e reaplica ACL Buriti conforme a matriz.
+     *
+     * @return array{tipos:int,acl:int,revogados:int}
+     */
+    public static function sincronizar(): array
+    {
+        if (! Schema::hasTable('pmieducar.tipo_usuario') || ! Schema::hasTable('menus')) {
+            return ['tipos' => 0, 'acl' => 0, 'revogados' => 0];
+        }
+
+        $tipos = 0;
+        foreach (self::perfis() as $p) {
+            DB::table('pmieducar.tipo_usuario')->updateOrInsert(
+                ['cod_tipo_usuario' => $p['cod']],
+                [
+                    'nm_tipo' => $p['nome'],
+                    'descricao' => $p['desc'],
+                    'nivel' => $p['nivel'],
+                    'ref_funcionario_cad' => 1,
+                    'data_cadastro' => now(),
+                    'ativo' => 1,
+                ]
+            );
+            $tipos++;
+        }
+
+        // Desativa o antigo “Assistência / rede de proteção” (cod 15 legado) se ainda existir com outro nome.
+        // Cod 15 passou a ser Bibliotecário.
+
+        $governados = self::menusGovernados();
+        $revogados = 0;
+        if ($governados !== []) {
+            $revogados = DB::table('pmieducar.menu_tipo_usuario')
+                ->whereIn('menu_id', $governados)
+                ->whereIn('ref_cod_tipo_usuario', array_column(self::perfis(), 'cod'))
+                ->delete();
+        }
+
+        $acl = 0;
+        foreach (self::perfis() as $p) {
+            $processos = self::processosDoPerfil($p);
+            $acl += self::conceder($processos, [$p['cod']]);
+        }
+
+        // Ambiente Laguna + flags: só admin.
+        $revogados += self::revogarForaDe(
+            array_merge(
+                self::faixasModulo()['laguna-ambiente'],
+                self::faixasModulo()['modulos-config'],
+            ),
+            [self::TIPO_ADMIN]
+        );
+
+        return ['tipos' => $tipos, 'acl' => $acl, 'revogados' => $revogados];
+    }
+
+    /**
+     * @param  Perfil  $perfil
+     * @return list<int>
+     */
+    public static function processosDoPerfil(array $perfil): array
+    {
+        $faixas = self::faixasModulo();
+        $modulos = $perfil['modulos'];
+        $excluir = $perfil['excluir_modulos'] ?? [];
+
+        if ($modulos === '*') {
+            $ids = [];
+            foreach ($faixas as $chave => $processos) {
+                if (in_array($chave, $excluir, true)) {
+                    continue;
+                }
+                foreach ($processos as $p) {
+                    $ids[] = $p;
+                }
+            }
+
+            return array_values(array_unique($ids));
+        }
+
+        $ids = [];
+        foreach ($modulos as $mod) {
+            foreach ($faixas[$mod] ?? [] as $p) {
+                $ids[] = $p;
+            }
+        }
+
+        return array_values(array_unique($ids));
+    }
+
+    /**
+     * Menus cujo process está sob governança da matriz Laguna/Buriti.
+     *
+     * @return list<int>
+     */
+    public static function menusGovernados(): array
+    {
+        $processos = [];
+        foreach (self::faixasModulo() as $lista) {
+            foreach ($lista as $p) {
+                $processos[] = $p;
+            }
+        }
+        $processos = array_values(array_unique($processos));
+
+        // Também captura folhas criadas na faixa numérica (ex.: 880110) mesmo fora da lista explícita de vagas/censo.
+        $ids = Menu::query()
+            ->where(function ($q) use ($processos): void {
+                $q->whereIn('process', $processos)
+                    ->orWhere(function ($r): void {
+                        $r->whereBetween('process', [880100, 883099])
+                            ->orWhereBetween('process', [889900, 889999]);
+                    });
+            })
+            ->pluck('id')
+            ->all();
+
+        return array_map('intval', $ids);
     }
 
     /**
@@ -54,7 +369,7 @@ final class PermissaoMatriz
         ?array $tiposCodigos = null,
         array $processosSomenteVisualiza = [],
     ): int {
-        $q = \Illuminate\Support\Facades\DB::table('pmieducar.tipo_usuario')->where('ativo', 1);
+        $q = DB::table('pmieducar.tipo_usuario')->where('ativo', 1);
         if ($tiposCodigos !== null) {
             $q->whereIn('cod_tipo_usuario', $tiposCodigos);
         }
@@ -64,7 +379,7 @@ final class PermissaoMatriz
         foreach ($tipos as $tipo) {
             $base = self::paraNivel((int) $tipo->nivel, (int) $tipo->cod_tipo_usuario);
             foreach ($processos as $processo) {
-                $menuId = \App\Menu::query()->where('process', $processo)->value('id');
+                $menuId = Menu::query()->where('process', $processo)->value('id');
                 if ($menuId === null) {
                     continue;
                 }
@@ -73,7 +388,7 @@ final class PermissaoMatriz
                     $acl['cadastra'] = 0;
                     $acl['exclui'] = 0;
                 }
-                \Illuminate\Support\Facades\DB::table('pmieducar.menu_tipo_usuario')->updateOrInsert(
+                DB::table('pmieducar.menu_tipo_usuario')->updateOrInsert(
                     [
                         'ref_cod_tipo_usuario' => $tipo->cod_tipo_usuario,
                         'menu_id' => $menuId,
@@ -95,14 +410,27 @@ final class PermissaoMatriz
      */
     public static function revogarForaDe(array $processos, array $excetoTipos): int
     {
-        $menuIds = \App\Menu::query()->whereIn('process', $processos)->pluck('id');
+        $menuIds = Menu::query()->whereIn('process', $processos)->pluck('id');
         if ($menuIds->isEmpty()) {
             return 0;
         }
 
-        return \Illuminate\Support\Facades\DB::table('pmieducar.menu_tipo_usuario')
+        return DB::table('pmieducar.menu_tipo_usuario')
             ->whereIn('menu_id', $menuIds)
             ->whereNotIn('ref_cod_tipo_usuario', $excetoTipos)
             ->delete();
+    }
+
+    /** @return list<int> */
+    private static function faixa(int $ini, int $fim): array
+    {
+        // Não materializa a faixa inteira: concede pelos menus existentes no intervalo.
+        return Menu::query()
+            ->whereBetween('process', [$ini, $fim])
+            ->pluck('process')
+            ->map(static fn ($p) => (int) $p)
+            ->unique()
+            ->values()
+            ->all();
     }
 }

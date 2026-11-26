@@ -4,11 +4,11 @@ namespace iEducar\Packages\BuritiLagunaAmbiente\Support;
 
 final class Identidade
 {
-    public const COR = '#16384a';
+    public const COR = '#1a5f9e';
 
-    public const DESTAQUE = '#1f4e66';
+    public const DESTAQUE = '#2f7ec4';
 
-    public const COR_CLARA = '#e8eef2';
+    public const COR_CLARA = '#e8eef8';
 
     public const ICONE = 'fa-heartbeat';
 

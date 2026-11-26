@@ -54,7 +54,7 @@ return new class extends Migration
             $this->anexarGrupoSobPai(
                 processoRaiz: 882000,
                 paiId: $servidores->getKey(),
-                titulo: 'Contratações temporárias',
+                titulo: 'Contratações',
                 link: '/contratacoes-temporarias',
                 icone: 'fa-briefcase',
                 ordem: 3,
@@ -74,7 +74,7 @@ return new class extends Migration
             $this->anexarGrupoSobPai(
                 processoRaiz: 882101,
                 paiId: $configuracoes->getKey(),
-                titulo: 'Apps API',
+                titulo: 'APIs',
                 link: '/apps-api/configuracao',
                 icone: 'fa-mobile',
                 ordem: 4,

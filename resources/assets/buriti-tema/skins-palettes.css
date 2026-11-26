@@ -1,0 +1,258 @@
+/**
+ * Paletas das skins municipais — rodada de elegância (educação).
+ * Chrome: skin-core.css (body.tema-buriti-skin).
+ *
+ * Direção: rail clara (ou suave), topo menos saturado, borda 1px,
+ * profundidade por linha — sem bloco navy agressivo.
+ */
+
+/* —— Buriti (institucional Laguna · leve) —— */
+body.tema-buriti,
+body.tema-buriti-laguna {
+  --cor: #3d6f98;
+  --destaque: #4f84ad;
+  --acento: #5b9e94;
+  --nav: #f3f5f8;
+  --nav-borda: #e3e8ef;
+  --nav-texto: #243447;
+  --nav-mute: #6a7b8c;
+  --fundo: #f6f8fb;
+  --clara: #eef2f7;
+  --superficie: #ffffff;
+  --tinta: #1e2936;
+  --suave: #5f6f80;
+  --linha: #e6ebf1;
+  --fonte: "Manrope", "Segoe UI", system-ui, sans-serif;
+  --raio: 10px;
+  --sombra: none;
+  --sombra-leve: none;
+}
+
+body.tema-buriti .ieducar-header,
+body.tema-buriti-laguna .ieducar-header {
+  background: #4a7aa3 !important;
+  border-bottom: 1px solid #5b9e94 !important;
+  box-shadow: none !important;
+}
+
+body.tema-buriti .ieducar-sidebar,
+body.tema-buriti-laguna .ieducar-sidebar,
+body.tema-buriti #menu_lateral,
+body.tema-buriti-laguna #menu_lateral,
+body.tema-buriti td.r3c1,
+body.tema-buriti-laguna td.r3c1 {
+  background: #f3f5f8 !important;
+  color: #243447 !important;
+  border-right: 1px solid #e3e8ef !important;
+}
+
+body.tema-buriti .ieducar-footer,
+body.tema-buriti-laguna .ieducar-footer,
+body.tema-buriti tr.rodape td,
+body.tema-buriti-laguna tr.rodape td {
+  background: #ffffff !important;
+  color: #5f6f80 !important;
+  border-top: 1px solid #e6ebf1 !important;
+}
+
+body.tema-buriti .ieducar-footer a,
+body.tema-buriti-laguna .ieducar-footer a,
+body.tema-buriti tr.rodape a,
+body.tema-buriti-laguna tr.rodape a {
+  color: #3d6f98 !important;
+  font-weight: 600 !important;
+}
+
+/* —— Ébano (elegante · ivory) —— */
+body.tema-ebano {
+  --cor: #3f3732;
+  --destaque: #5a4f45;
+  --acento: #b89a6e;
+  --nav: #f7f3ec;
+  --nav-borda: #e8e0d4;
+  --nav-texto: #2a2420;
+  --nav-mute: #7a6f62;
+  --fundo: #f9f6f0;
+  --clara: #f1ebe3;
+  --superficie: #fffcf8;
+  --tinta: #1f1a16;
+  --suave: #6e6458;
+  --linha: #e6ddd1;
+  --fonte: "Libre Baskerville", Georgia, "Segoe UI", serif;
+  --raio: 8px;
+  --sombra: none;
+}
+
+body.tema-ebano .ieducar-header {
+  background: #4a423c !important;
+  border-bottom: 1px solid #b89a6e !important;
+  box-shadow: none !important;
+}
+
+body.tema-ebano .ieducar-sidebar,
+body.tema-ebano #menu_lateral,
+body.tema-ebano td.r3c1 {
+  background: #f7f3ec !important;
+  color: #2a2420 !important;
+  border-right: 1px solid #e8e0d4 !important;
+}
+
+body.tema-ebano .ieducar-footer,
+body.tema-ebano tr.rodape td {
+  background: #fffcf8 !important;
+  color: #6e6458 !important;
+  border-top: 1px solid #e6ddd1 !important;
+}
+
+/* —— Horizonte (moderna · slate suave) —— */
+body.tema-horizonte {
+  --cor: #334155;
+  --destaque: #3b6fb5;
+  --acento: #5b8fd4;
+  --nav: #f3f5f8;
+  --nav-borda: #e2e8f0;
+  --nav-texto: #1e293b;
+  --nav-mute: #64748b;
+  --fundo: #f5f7fa;
+  --clara: #e9eef5;
+  --superficie: #ffffff;
+  --tinta: #0f172a;
+  --suave: #64748b;
+  --linha: #e2e8f0;
+  --fonte: "Manrope", "Segoe UI", system-ui, sans-serif;
+  --raio: 8px;
+  --sombra: none;
+}
+
+body.tema-horizonte .ieducar-header {
+  background: #3d4f66 !important;
+  border-bottom: 1px solid #5b8fd4 !important;
+  box-shadow: none !important;
+}
+
+body.tema-horizonte .ieducar-sidebar,
+body.tema-horizonte #menu_lateral,
+body.tema-horizonte td.r3c1 {
+  background: #f3f5f8 !important;
+  color: #1e293b !important;
+  border-right: 1px solid #e2e8f0 !important;
+}
+
+body.tema-horizonte .ieducar-footer,
+body.tema-horizonte tr.rodape td {
+  background: #ffffff !important;
+  color: #64748b !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+/* —— Órbita (noite calma — sem neon) —— */
+body.tema-orbita {
+  --cor: #121a2e;
+  --destaque: #2a9f90;
+  --acento: #3db8a8;
+  --nav: #0f1524;
+  --nav-borda: #1e2940;
+  --nav-texto: #dce8e4;
+  --nav-mute: #8aa4b8;
+  --fundo: #0b1020;
+  --clara: #151d32;
+  --superficie: #121a2e;
+  --tinta: #e2ece8;
+  --suave: #8aa4b8;
+  --linha: #1e2940;
+  --fonte: "Manrope", "Segoe UI", system-ui, sans-serif;
+  --raio: 6px;
+  --sombra: none;
+  color-scheme: dark;
+}
+
+body.tema-orbita .ieducar-header {
+  background: #0e1422 !important;
+  border-bottom: 1px solid #2a9f90 !important;
+  box-shadow: none !important;
+}
+
+body.tema-orbita .ieducar-sidebar,
+body.tema-orbita #menu_lateral,
+body.tema-orbita td.r3c1 {
+  background: #0f1524 !important;
+  border-right: 1px solid #1e2940 !important;
+  color: #dce8e4 !important;
+}
+
+body.tema-orbita .formdktd,
+body.tema-orbita .tablelistagem th {
+  background: #151d32 !important;
+  color: #3db8a8 !important;
+}
+
+body.tema-orbita .ieducar-footer,
+body.tema-orbita tr.rodape td {
+  background: #0e1422 !important;
+  color: #8aa4b8 !important;
+  border-top: 1px solid #1e2940 !important;
+}
+
+body.tema-orbita .ieducar-footer a,
+body.tema-orbita tr.rodape a {
+  color: #3db8a8 !important;
+  font-weight: 600 !important;
+}
+
+/* —— Litoral (elegante municipal · rail clara) —— */
+body.tema-litoral {
+  --cor: #2a5f78;
+  --destaque: #3a7a92;
+  --acento: #4a9e92;
+  --nav: #f2f6f5;
+  --nav-borda: #dce6e3;
+  --nav-texto: #1a2f3a;
+  --nav-mute: #5a6f78;
+  --fundo: #f4f8f7;
+  --clara: #e8f0ee;
+  --superficie: #fafcfb;
+  --tinta: #12202c;
+  --suave: #5a6f78;
+  --linha: #d8e2df;
+  --fonte: "Manrope", "Segoe UI", system-ui, sans-serif;
+  --raio: 12px;
+  --sombra: none;
+}
+
+body.tema-litoral .ieducar-header {
+  background: #3a6f88 !important;
+  border-bottom: 1px solid #4a9e92 !important;
+  box-shadow: none !important;
+}
+
+body.tema-litoral .ieducar-sidebar,
+body.tema-litoral #menu_lateral,
+body.tema-litoral td.r3c1 {
+  background: #f2f6f5 !important;
+  color: #1a2f3a !important;
+  border-right: 1px solid #dce6e3 !important;
+}
+
+body.tema-litoral .ieducar-footer,
+body.tema-litoral tr.rodape td {
+  background: #fafcfb !important;
+  color: #5a6f78 !important;
+  border-top: 1px solid #d8e2df !important;
+}
+
+/*
+ * Modo escuro global: conteúdo calmo; rail da skin claro vira elevação discreta.
+ */
+html[data-buriti-modo="escuro"] body.tema-buriti-skin:not(.tema-orbita) {
+  --fundo: #0d1017;
+  --clara: #181e2b;
+  --superficie: #131824;
+  --tinta: #e8ecf4;
+  --suave: #9aa3b5;
+  --linha: #2a3142;
+  --input-bg: #0e121a;
+  --nav: #12161f;
+  --nav-borda: #232a38;
+  --nav-texto: #e6eaf2;
+  --nav-mute: #8b95a8;
+}

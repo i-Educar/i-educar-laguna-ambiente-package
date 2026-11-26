@@ -3,7 +3,9 @@
 namespace iEducar\Packages\BuritiLagunaAmbiente\Services;
 
 use App\Support\Tenancy\PackageTenant;
+use iEducar\Packages\BuritiLagunaAmbiente\Support\AprovacaoModulo;
 use iEducar\Packages\BuritiLagunaAmbiente\Support\CatalogoModulos;
+use iEducar\Packages\BuritiLagunaAmbiente\Support\ModuloConfiguracao;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -15,7 +17,7 @@ final class AmbienteAuditor
      *   ok:bool,
      *   resumo:array{obrigatorios_ok:int,obrigatorios_total:int,falhas:int,avisos:int},
      *   nucleo:list<array{chave:string,ok:bool,detalhe:string}>,
-     *   modulos:list<array{id:string,tr:string,nome:string,nivel:string,ok:bool,checks:list<array{nome:string,ok:bool,detalhe:string}>}>
+     *   modulos:list<array{id:string,tr:string,nome:string,nivel:string,ok:bool,situacao:string,checks:list<array{nome:string,ok:bool,detalhe:string,critico?:bool}>}>
      * }
      */
     public function auditar(): array
@@ -26,24 +28,47 @@ final class AmbienteAuditor
         $obrigatoriosTotal = 0;
         $falhas = 0;
         $avisos = 0;
+        $contagem = [
+            AprovacaoModulo::STATUS_FUNCIONA => 0,
+            AprovacaoModulo::STATUS_RESSALVA => 0,
+            AprovacaoModulo::STATUS_REPROVADO => 0,
+            AprovacaoModulo::STATUS_TESTAR => 0,
+        ];
 
         foreach (CatalogoModulos::todos() as $mod) {
+            if (! empty($mod['ocultar_painel']) || ! empty($mod['agregado_em'])) {
+                continue; // horário/ACT/eventos → cards sob RH / Servidores
+            }
             $checks = $this->checarModulo($mod);
-            $ok = ! in_array(false, array_column($checks, 'ok'), true);
+            $tecnico = AprovacaoModulo::classificarTecnico($checks);
+            $ok = $tecnico !== AprovacaoModulo::STATUS_REPROVADO;
+            $situacao = AprovacaoModulo::situacaoExibicao((string) $mod['id'], $checks);
+            $pctChecks = AprovacaoModulo::percentualChecks($checks);
+            $contagem[$situacao['status']] = ($contagem[$situacao['status']] ?? 0) + 1;
+
             if ($mod['nivel'] === 'obrigatorio') {
                 $obrigatoriosTotal++;
-                if ($ok) {
+                if ($tecnico === AprovacaoModulo::STATUS_FUNCIONA) {
                     $obrigatoriosOk++;
-                } else {
+                } elseif ($tecnico === AprovacaoModulo::STATUS_REPROVADO) {
                     $falhas++;
+                } else {
+                    $avisos++;
                 }
-            } elseif (! $ok) {
+            } elseif ($tecnico !== AprovacaoModulo::STATUS_FUNCIONA) {
                 $avisos++;
             }
 
             $adminUrl = $mod['admin_url'] ?? null;
             if (($adminUrl === null || $adminUrl === '') && ! empty($mod['rotas'][0]) && ! str_starts_with((string) $mod['rotas'][0], '/api/')) {
                 $adminUrl = $mod['rotas'][0];
+            }
+
+            $habilitado = true;
+            try {
+                $habilitado = ModuloConfiguracao::ativo((string) $mod['id']);
+            } catch (\Throwable) {
+                $habilitado = true;
             }
 
             $modulos[] = [
@@ -53,10 +78,17 @@ final class AmbienteAuditor
                 'nivel' => $mod['nivel'],
                 'composer' => $mod['composer'],
                 'ok' => $ok,
+                'tecnico' => $tecnico,
+                'situacao' => $situacao['status'],
+                'situacao_meta' => $situacao,
                 'checks' => $checks,
+                'percentual' => $pctChecks['percentual'],
+                'checks_ok' => $pctChecks['ok'],
+                'checks_total' => $pctChecks['total'],
                 'cor' => $mod['cor'] ?? '#5b6b76',
                 'icone' => $mod['icone'] ?? 'fa-cube',
                 'admin_url' => $adminUrl,
+                'habilitado' => $habilitado,
             ];
         }
 
@@ -72,9 +104,16 @@ final class AmbienteAuditor
                 'obrigatorios_total' => $obrigatoriosTotal,
                 'falhas' => $falhas,
                 'avisos' => $avisos,
+                'por_situacao' => $contagem,
             ],
             'nucleo' => $nucleo,
             'modulos' => $modulos,
+            'legenda' => [
+                AprovacaoModulo::meta(AprovacaoModulo::STATUS_FUNCIONA),
+                AprovacaoModulo::meta(AprovacaoModulo::STATUS_RESSALVA),
+                AprovacaoModulo::meta(AprovacaoModulo::STATUS_REPROVADO),
+                AprovacaoModulo::meta(AprovacaoModulo::STATUS_TESTAR),
+            ],
         ];
     }
 
@@ -135,16 +174,20 @@ final class AmbienteAuditor
         $checks = [];
         $base = base_path($mod['path']);
         $pastaExiste = is_dir($base);
+        $obrigatorio = ($mod['nivel'] ?? '') === 'obrigatorio';
+
         $checks[] = [
             'nome' => 'pasta',
             'ok' => $pastaExiste,
+            'critico' => $obrigatorio,
             'detalhe' => $pastaExiste ? $mod['path'] : 'ausente: '.$mod['path'],
         ];
 
         $composerOk = $pastaExiste && is_file($base.'/composer.json');
         $checks[] = [
             'nome' => 'composer.json',
-            'ok' => $composerOk || $mod['nivel'] === 'opcional',
+            'ok' => $composerOk || ! $obrigatorio,
+            'critico' => $obrigatorio,
             'detalhe' => $composerOk ? $mod['composer'] : 'pacote não encontrado no path',
         ];
 
@@ -156,6 +199,7 @@ final class AmbienteAuditor
             $checks[] = [
                 'nome' => 'provider',
                 'ok' => $classeOk && $registrado,
+                'critico' => $obrigatorio,
                 'detalhe' => $classeOk
                     ? ($registrado ? 'classe + registrado' : 'classe existe mas não está em config/app.php')
                     : ($arquivoProvider
@@ -168,7 +212,8 @@ final class AmbienteAuditor
             $allows = PackageTenant::allows($mod['composer']);
             $checks[] = [
                 'nome' => 'PackageTenant',
-                'ok' => $allows || $mod['nivel'] !== 'obrigatorio',
+                'ok' => $allows || ! $obrigatorio,
+                'critico' => false,
                 'detalhe' => $allows
                     ? 'liberado no tenant atual'
                     : 'bloqueado em tenants.packages — inclua '.$mod['composer'],
@@ -179,7 +224,8 @@ final class AmbienteAuditor
             $ok = $this->schemaExiste($schema);
             $checks[] = [
                 'nome' => 'schema:'.$schema,
-                'ok' => $ok || $mod['nivel'] !== 'obrigatorio',
+                'ok' => $ok || ! $obrigatorio,
+                'critico' => false,
                 'detalhe' => $ok ? "schema {$schema} presente" : "schema {$schema} ausente (migrate?)",
             ];
         }
@@ -188,7 +234,8 @@ final class AmbienteAuditor
             $ok = $this->menuProcessoExiste((int) $processo);
             $checks[] = [
                 'nome' => 'menu:'.$processo,
-                'ok' => $ok || $mod['nivel'] !== 'obrigatorio',
+                'ok' => $ok || ! $obrigatorio,
+                'critico' => false,
                 'detalhe' => $ok ? "processo {$processo} no menus" : "processo {$processo} sem menu (migrate do pacote?)",
             ];
         }
@@ -198,7 +245,8 @@ final class AmbienteAuditor
             $ok = isset($comandos[$cmd]);
             $checks[] = [
                 'nome' => 'cmd:'.$cmd,
-                'ok' => $ok || $mod['nivel'] === 'opcional',
+                'ok' => $ok || ($mod['nivel'] ?? '') === 'opcional',
+                'critico' => false,
                 'detalhe' => $ok ? 'comando registrado' : 'comando não listado no Artisan',
             ];
         }

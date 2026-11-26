@@ -18,6 +18,8 @@
             'nome' => $u['nome'] ?? $u['name'] ?? $u['label'] ?? '',
             'meta' => $meta,
             'login' => $u['login'] ?? '',
+            'data' => (array) ($u['data'] ?? []),
+            'data_id' => $u['data_id'] ?? null,
         ];
     })->all();
     $ajuda = $ajuda ?? (
@@ -35,10 +37,11 @@
     'selecionado' => $selecionado ?? null,
     'placeholder' => $placeholder ?? 'Buscar por nome ou matrícula…',
     'vazio' => $vazio ?? '— escolher na lista —',
-    'ajuda' => $ajuda,
+    'ajuda' => (! empty($compacto) || ! empty($filtro)) ? null : $ajuda,
     'obrigatorio' => $obrigatorio ?? false,
     'onchange' => $onchange ?? null,
     'attrs' => $attrs ?? null,
-    'colWide' => $colWide ?? true,
+    'colWide' => $colWide ?? (empty($compacto) && empty($filtro)),
+    'compacto' => ! empty($compacto) || ! empty($filtro),
     'tamanho' => $tamanho ?? min(8, max(5, count($opcoes) ?: 5)),
 ])

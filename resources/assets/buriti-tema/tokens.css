@@ -1,35 +1,111 @@
 /**
- * Tokens Buriti — alinhado ao painel municipal (dashboard).
- * Paleta sóbria: azul-petróleo + fundo claro + superfícies brancas.
+ * Tokens Buriti × LibreCode — identidade visual dual (SME / i-Educar).
+ *
+ * Abordagem leve: superfícies planas, sombra mínima, contraste calmo
+ * (adequado a uso prolongado em ambiente educacional).
+ *
+ * Claro  (Buriti): canvas azul-névoa suave, tinta navy, azul + terracotta.
+ * Escuro (LibreCode): elevações ink discretas, cyan de link.
+ *
+ * Módulos sobrescrevem só --cor / --destaque / --clara / --cor-tela (marca).
+ */
+/*
+ * Tokens base (claro). Skins em skins-palettes.css sobrescrevem --nav/--nav-texto
+ * no body.tema-* — não amarrar .tema-buriti-laguna aqui (conflitava com rail navy).
  */
 :root,
-.tema-buriti-laguna {
-  --cor: #0e2a3a;
-  --destaque: #1a5f78;
-  --acento: #0d7a6f;
-  --nav: #f4f7f9;
-  --nav-borda: #d7e0e7;
-  --nav-texto: #1a3344;
-  --nav-mute: #5a6b76;
-  --fundo: #eef2f5;
-  --clara: #e6eef3;
+html[data-buriti-modo="claro"] {
+  color-scheme: light;
+  --cor: #3d6f98;
+  --destaque: #4f84ad;
+  --acento: #5b9e94;
+  --nav: #f3f5f8;
+  --nav-borda: #e3e8ef;
+  --nav-texto: #243447;
+  --nav-mute: #6a7b8c;
+  --fundo: #f6f8fb;
+  --clara: #eef2f7;
   --superficie: #ffffff;
-  --tinta: #142028;
-  --suave: #5a6b76;
-  --linha: #d0dbe3;
-  --ok: #146c42;
-  --ok-fundo: #e4f5eb;
-  --erro: #8f2424;
-  --erro-fundo: #fceceb;
-  --ambar: #a85f00;
-  --ambar-fundo: #fff5e6;
+  --superficie-alta: #ffffff;
+  --input-bg: #ffffff;
+  --input-bg-foco: #ffffff;
+  --tinta: #1e2936;
+  --suave: #5f6f80;
+  --linha: #e6ebf1;
+  --linha-forte: #cdd6e1;
+  --ok: #1a7a4c;
+  --ok-fundo: #eef8f2;
+  --erro: #c74634;
+  --erro-fundo: #fdf1ef;
+  --ambar: #9a6700;
+  --ambar-fundo: #fff8eb;
+  --muted-fundo: #f1f4f7;
+  --muted-tinta: #64748b;
   --topo-h: 52px;
   --lateral-w: 256px;
   --raio: 10px;
   --raio-sm: 8px;
   --fonte: "Manrope", "Segoe UI", system-ui, -apple-system, sans-serif;
   --ico-btn: 40px;
-  --sombra: 0 1px 2px rgba(14, 42, 58, 0.04), 0 8px 24px rgba(14, 42, 58, 0.06);
-  --sombra-leve: 0 1px 2px rgba(14, 42, 58, 0.05);
-  --foco: 0 0 0 3px color-mix(in srgb, var(--destaque) 28%, transparent);
+  /* Sombras quase imperceptíveis — profundidade por borda, não por halo */
+  --sombra: 0 1px 2px rgba(15, 27, 45, 0.04);
+  --sombra-leve: 0 1px 1px rgba(15, 27, 45, 0.03);
+  --foco: 0 0 0 2px color-mix(in srgb, var(--destaque) 28%, transparent);
+  --topo-fundo: color-mix(in srgb, #fff 96%, transparent);
+  --topo-borda: var(--linha);
+  --marca-selo-bg: #ffffff;
+  --marca-selo-borda: rgba(26, 95, 158, 0.1);
+  --mix-branco: #ffffff;
+  --buriti-terracotta: #b85a4a;
+  --buriti-terracotta-bright: #c96a58;
+  --buriti-azul: #3d6f98;
+  --buriti-azul-bright: #4f84ad;
+  --buriti-site: #2f6bff;
+  --link: var(--destaque);
+}
+
+html[data-buriti-modo="escuro"],
+html[data-buriti-modo="escuro"] .tema-buriti-laguna,
+body.tema-buriti-laguna[data-buriti-modo="escuro"] {
+  color-scheme: dark;
+  /*
+   * Elevação suave: fundo < superficie < clara < input
+   * Sem glows; contraste legível sem “neon”.
+   */
+  --acento: #7ad3de;
+  --nav: #0c0f15;
+  --nav-borda: #232a38;
+  --nav-texto: #e6eaf2;
+  --nav-mute: #8b95a8;
+  --fundo: #0d1017;
+  --clara: #181e2b;
+  --superficie: #131824;
+  --superficie-alta: #1a2030;
+  --input-bg: #0e121a;
+  --input-bg-foco: #181e2b;
+  --tinta: #e8ecf4;
+  --suave: #9aa3b5;
+  --linha: #2a3142;
+  --linha-forte: #3a4256;
+  --ok: #3dbaa4;
+  --ok-fundo: #0f2a22;
+  --erro: #e0938c;
+  --erro-fundo: #2a1614;
+  --ambar: #d4a24a;
+  --ambar-fundo: #2a2210;
+  --muted-fundo: #181e2b;
+  --muted-tinta: #8b95a8;
+  --sombra: 0 1px 2px rgba(0, 0, 0, 0.28);
+  --sombra-leve: 0 1px 1px rgba(0, 0, 0, 0.2);
+  --foco: 0 0 0 2px rgba(122, 211, 222, 0.28);
+  --topo-fundo: color-mix(in srgb, #131824 96%, transparent);
+  --topo-borda: #2a3142;
+  --marca-selo-bg: #ffffff;
+  --marca-selo-borda: rgba(255, 255, 255, 0.16);
+  --mix-branco: #131824;
+  --librecode-red: #b86a63;
+  --librecode-red-bright: #c97d76;
+  --librecode-cyan: #7ad3de;
+  --librecode-deep: #4a4ab8;
+  --link: #7ad3de;
 }

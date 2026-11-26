@@ -21,20 +21,33 @@ final class LagunaPovoarCidadeService
 
     private const INEP_BASE = 420910200;
 
-    /** @var list<array{nome:string,sigla:string,zona:int,perfil:string}> */
+    /** Centro urbano de Laguna/SC (referência do mapa da pré-matrícula). */
+    private const MAP_LAT = -28.4829;
+
+    private const MAP_LNG = -48.7811;
+
+    /**
+     * Rede escolar Laguna/SC (IBGE 4209102) com endereço e coordenadas para o mapa.
+     *
+     * @var list<array{
+     *   nome:string,sigla:string,zona:int,perfil:string,
+     *   lat:float,lng:float,fone:string,
+     *   logradouro:string,numero:string,bairro:string,cep:string
+     * }>
+     */
     private const ESCOLAS = [
-        ['nome' => 'EMEF Prefeito Júlio Garcia — Laguna', 'sigla' => 'EJG', 'zona' => 1, 'perfil' => 'fundamental'],
-        ['nome' => 'EMEF Anita Garibaldi', 'sigla' => 'EAG', 'zona' => 1, 'perfil' => 'fundamental'],
-        ['nome' => 'EMEF Domingos Fernandes de Oliveira', 'sigla' => 'EDF', 'zona' => 1, 'perfil' => 'fundamental'],
-        ['nome' => 'EMEF Professora Rosa Maria', 'sigla' => 'ERM', 'zona' => 1, 'perfil' => 'fundamental'],
-        ['nome' => 'EMEF Marcolino Martins Cabral', 'sigla' => 'EMC', 'zona' => 1, 'perfil' => 'fundamental_medio'],
-        ['nome' => 'EMEI Pequeno Príncipe', 'sigla' => 'EPP', 'zona' => 1, 'perfil' => 'infantil'],
-        ['nome' => 'EMEI Cantinho do Saber', 'sigla' => 'ECS', 'zona' => 1, 'perfil' => 'infantil'],
-        ['nome' => 'EMEF Marechal Deodoro', 'sigla' => 'EMD', 'zona' => 1, 'perfil' => 'fundamental'],
-        ['nome' => 'CEIM Flor do Mar', 'sigla' => 'CFM', 'zona' => 1, 'perfil' => 'infantil_aee'],
-        ['nome' => 'EMEF João da Cruz e Souza', 'sigla' => 'EJC', 'zona' => 1, 'perfil' => 'fundamental'],
-        ['nome' => 'EMEF Vila Nova', 'sigla' => 'EVN', 'zona' => 1, 'perfil' => 'fundamental'],
-        ['nome' => 'EMEF Ribeirão Pequeno', 'sigla' => 'ERP', 'zona' => 2, 'perfil' => 'fundamental_rural'],
+        ['nome' => 'EMEF Prefeito Júlio Garcia — Laguna', 'sigla' => 'EJG', 'zona' => 1, 'perfil' => 'fundamental', 'lat' => -28.4829, 'lng' => -48.7811, 'fone' => '36441001', 'logradouro' => 'Rua Conselheiro Trajano', 'numero' => '320', 'bairro' => 'Centro', 'cep' => '88790000'],
+        ['nome' => 'EMEF Anita Garibaldi', 'sigla' => 'EAG', 'zona' => 1, 'perfil' => 'fundamental', 'lat' => -28.4855, 'lng' => -48.7750, 'fone' => '36441002', 'logradouro' => 'Rua Jerônimo Coelho', 'numero' => '145', 'bairro' => 'Centro', 'cep' => '88790000'],
+        ['nome' => 'EMEF Domingos Fernandes de Oliveira', 'sigla' => 'EDF', 'zona' => 1, 'perfil' => 'fundamental', 'lat' => -28.4780, 'lng' => -48.7880, 'fone' => '36441003', 'logradouro' => 'Avenida João Pinho', 'numero' => '890', 'bairro' => 'Mar Grosso', 'cep' => '88790000'],
+        ['nome' => 'EMEF Professora Rosa Maria', 'sigla' => 'ERM', 'zona' => 1, 'perfil' => 'fundamental', 'lat' => -28.4900, 'lng' => -48.7700, 'fone' => '36441004', 'logradouro' => 'Rua Vidal Ramos', 'numero' => '210', 'bairro' => 'Magalhães', 'cep' => '88790000'],
+        ['nome' => 'EMEF Marcolino Martins Cabral', 'sigla' => 'EMC', 'zona' => 1, 'perfil' => 'fundamental_medio', 'lat' => -28.4750, 'lng' => -48.7950, 'fone' => '36441005', 'logradouro' => 'Rua Coronel Fernandes Martins', 'numero' => '55', 'bairro' => 'Progresso', 'cep' => '88790000'],
+        ['nome' => 'EMEI Pequeno Príncipe', 'sigla' => 'EPP', 'zona' => 1, 'perfil' => 'infantil', 'lat' => -28.4880, 'lng' => -48.7650, 'fone' => '36441006', 'logradouro' => 'Rua São Pedro', 'numero' => '78', 'bairro' => 'Magalhães', 'cep' => '88790000'],
+        ['nome' => 'EMEI Cantinho do Saber', 'sigla' => 'ECS', 'zona' => 1, 'perfil' => 'infantil', 'lat' => -28.4700, 'lng' => -48.7850, 'fone' => '36441007', 'logradouro' => 'Rua das Nações', 'numero' => '112', 'bairro' => 'Mar Grosso', 'cep' => '88790000'],
+        ['nome' => 'EMEF Marechal Deodoro', 'sigla' => 'EMD', 'zona' => 1, 'perfil' => 'fundamental', 'lat' => -28.4920, 'lng' => -48.7920, 'fone' => '36441008', 'logradouro' => 'Rua Marechal Deodoro', 'numero' => '430', 'bairro' => 'Centro', 'cep' => '88790000'],
+        ['nome' => 'CEIM Flor do Mar', 'sigla' => 'CFM', 'zona' => 1, 'perfil' => 'infantil_aee', 'lat' => -28.4680, 'lng' => -48.7720, 'fone' => '36441009', 'logradouro' => 'Rua Beira Mar', 'numero' => '250', 'bairro' => 'Mar Grosso', 'cep' => '88790000'],
+        ['nome' => 'EMEF João da Cruz e Souza', 'sigla' => 'EJC', 'zona' => 1, 'perfil' => 'fundamental', 'lat' => -28.4950, 'lng' => -48.7780, 'fone' => '36441010', 'logradouro' => 'Rua Cruz e Souza', 'numero' => '95', 'bairro' => 'Vila Nova', 'cep' => '88790000'],
+        ['nome' => 'EMEF Vila Nova', 'sigla' => 'EVN', 'zona' => 1, 'perfil' => 'fundamental', 'lat' => -28.4600, 'lng' => -48.7600, 'fone' => '36441011', 'logradouro' => 'Rua das Acácias', 'numero' => '180', 'bairro' => 'Vila Nova', 'cep' => '88790000'],
+        ['nome' => 'EMEF Ribeirão Pequeno', 'sigla' => 'ERP', 'zona' => 2, 'perfil' => 'fundamental_rural', 'lat' => -28.5200, 'lng' => -48.8200, 'fone' => '36441012', 'logradouro' => 'Estrada Geral Ribeirão Pequeno', 'numero' => 's/n', 'bairro' => 'Ribeirão Pequeno', 'cep' => '88790000'],
     ];
 
     /**
@@ -60,15 +73,18 @@ final class LagunaPovoarCidadeService
         $passos[] = $this->passo('Usuários multi-ator', fn () => $this->garantirUsuarios());
         $passos[] = $this->passo('Dados módulos (alimentação e PoC)', fn () => $this->povoarModulos());
         $passos[] = $this->chamar('transporte:simula', [], 'Simulação transporte na rede ampliada');
-        $passos[] = $this->chamar('alimentacao:demo', [], 'Cardápio alimentação');
-        $passos[] = $this->chamar('busca-ativa:demo', ['--faltas' => 28], 'Busca Ativa multi-etapa / atores');
-        $passos[] = $this->chamar('solicitacao:demo', [], 'Chamados multi-etapa / atores');
-        $passos[] = $this->chamar('atendimento:demo', [], 'Fila atendimento multi-situação');
-        $passos[] = $this->chamar('eventos:demo', [], 'Eventos, inscrições e certificados');
-        $passos[] = $this->chamar('biblioteca:demo', [], 'Acervo e empréstimos');
-        $passos[] = $this->chamar('almoxarifado:demo', [], 'Itens e pedidos do almoxarifado');
-        $passos[] = $this->chamar('horario:demo', [], 'Quadro de horários demo');
-        $passos[] = $this->chamar('act:demo', [], 'Processo ACT com vagas/inscrições');
+        $passos[] = $this->chamar('transporte:passagem-empenho-demo', [], 'Passagem/empenho transporte');
+        $passos[] = $this->chamar('alimentacao:demo', [], 'Cardápio alimentação (base)');
+        $passos[] = $this->chamar('busca-ativa:demo', ['--faltas' => 28, '--force' => true], 'Busca Ativa multi-etapa / atores');
+        $passos[] = $this->chamar('solicitacao:demo', ['--force' => true], 'Chamados multi-etapa / atores');
+        $passos[] = $this->chamar('atendimento:demo', ['--force' => true], 'Fila atendimento multi-situação');
+        $passos[] = $this->chamar('eventos:demo', ['--force' => true], 'Eventos, inscrições e certificados');
+        $passos[] = $this->chamar('biblioteca:demo', ['--force' => true], 'Acervo e empréstimos');
+        $passos[] = $this->chamar('almoxarifado:demo', ['--force' => true], 'Itens e pedidos do almoxarifado');
+        $passos[] = $this->chamar('horario:demo', ['--force' => true], 'Quadro de horários demo');
+        $passos[] = $this->chamar('act:demo', ['--force' => true], 'Processos seletivos ACT diversos');
+        $passos[] = $this->chamar('rh:demo', ['--force' => true], 'RH educacional (lotação / integrações)');
+        $passos = array_merge($passos, (new LagunaCargaCenariosService)->executar());
         $passos[] = $this->passo('Identidade Laguna', fn () => $this->garantirIdentidade());
         $passos[] = $this->passo('Resumo rede', fn () => $this->resumo());
 
@@ -126,63 +142,33 @@ final class LagunaPovoarCidadeService
 
     private function garantirPerfis(): string
     {
-        $perfis = [
-            ['cod' => 1, 'nome' => 'Administrador', 'nivel' => 1, 'desc' => 'Acesso total SME'],
-            ['cod' => 2, 'nome' => 'Secretário SME', 'nivel' => 1, 'desc' => 'Rede municipal completa'],
-            ['cod' => 3, 'nome' => 'Diretor escolar', 'nivel' => 2, 'desc' => 'Gestão da escola'],
-            ['cod' => 4, 'nome' => 'Coordenador pedagógico', 'nivel' => 2, 'desc' => 'Pedagógico escolar'],
-            ['cod' => 5, 'nome' => 'Professor', 'nivel' => 4, 'desc' => 'Docente'],
-            ['cod' => 6, 'nome' => 'Operador Transporte', 'nivel' => 1, 'desc' => 'Transporte escolar'],
-            ['cod' => 7, 'nome' => 'Operador Alimentação', 'nivel' => 1, 'desc' => 'Merenda / PNAE'],
-            ['cod' => 8, 'nome' => 'Operador Almoxarifado', 'nivel' => 1, 'desc' => 'Material e estoque'],
-            ['cod' => 9, 'nome' => 'Atendimento estudante', 'nivel' => 2, 'desc' => 'Acolhimento e filas'],
-            ['cod' => 10, 'nome' => 'Solicitação de serviços', 'nivel' => 2, 'desc' => 'Chamados escola↔SME'],
-            ['cod' => 11, 'nome' => 'RH / ACT', 'nivel' => 1, 'desc' => 'Contratações temporárias'],
-            ['cod' => 12, 'nome' => 'Quadro de horários', 'nivel' => 2, 'desc' => 'Grade e conflitos'],
-            ['cod' => 13, 'nome' => 'Operador Eventos', 'nivel' => 1, 'desc' => 'Eventos, formação e certificados'],
-            ['cod' => 14, 'nome' => 'Busca Ativa', 'nivel' => 1, 'desc' => 'Infrequência e processos de busca ativa'],
-            ['cod' => 15, 'nome' => 'Assistência / rede de proteção', 'nivel' => 1, 'desc' => 'Encaminhamentos e acompanhamento familiar'],
-        ];
+        $r = \iEducar\Packages\BuritiLagunaAmbiente\Support\PermissaoMatriz::sincronizar();
 
-        foreach ($perfis as $p) {
-            DB::table('pmieducar.tipo_usuario')->updateOrInsert(
-                ['cod_tipo_usuario' => $p['cod']],
+        // Secretário SME: além dos módulos Buriti, herda menus núcleo do i-Educar
+        // (Cadastros, Escola, etc.) — sem Ambiente Laguna / flags de módulos.
+        $this->concederMenusNucleoAoSecretario();
+
+        return $r['tipos'].' perfis · '.$r['acl'].' ACL · '.$r['revogados'].' revogadas';
+    }
+
+    private function concederMenusNucleoAoSecretario(): void
+    {
+        $governados = \iEducar\Packages\BuritiLagunaAmbiente\Support\PermissaoMatriz::menusGovernados();
+        $menus = DB::table('menus')
+            ->where('active', true)
+            ->whereNotNull('process')
+            ->when($governados !== [], fn ($q) => $q->whereNotIn('id', $governados))
+            ->pluck('id');
+
+        foreach ($menus as $menuId) {
+            DB::table('pmieducar.menu_tipo_usuario')->updateOrInsert(
                 [
-                    'nm_tipo' => $p['nome'],
-                    'descricao' => $p['desc'],
-                    'nivel' => $p['nivel'],
-                    'ref_funcionario_cad' => self::USUARIO_CAD,
-                    'data_cadastro' => now(),
-                    'ativo' => 1,
-                ]
+                    'ref_cod_tipo_usuario' => \iEducar\Packages\BuritiLagunaAmbiente\Support\PermissaoMatriz::TIPO_SECRETARIO,
+                    'menu_id' => $menuId,
+                ],
+                ['visualiza' => 1, 'cadastra' => 1, 'exclui' => 0],
             );
         }
-
-        $menus = DB::table('menus')->where('active', true)->whereNotNull('process')->pluck('id');
-        $criados = 0;
-        foreach ($perfis as $p) {
-            foreach ($menus as $menuId) {
-                $exists = DB::table('pmieducar.menu_tipo_usuario')
-                    ->where('ref_cod_tipo_usuario', $p['cod'])
-                    ->where('menu_id', $menuId)
-                    ->exists();
-                if ($exists) {
-                    continue;
-                }
-                // Professor: só visualiza; demais perfis cadastram.
-                $cadastra = $p['cod'] === 5 ? 0 : 1;
-                DB::table('pmieducar.menu_tipo_usuario')->insert([
-                    'ref_cod_tipo_usuario' => $p['cod'],
-                    'menu_id' => $menuId,
-                    'cadastra' => $cadastra,
-                    'visualiza' => 1,
-                    'exclui' => $p['cod'] <= 2 ? 1 : 0,
-                ]);
-                $criados++;
-            }
-        }
-
-        return count($perfis).' perfis · '.$criados.' ACL novas';
     }
 
     private function garantirEscolas(): string
@@ -196,17 +182,22 @@ final class LagunaPovoarCidadeService
             $ja = SchoolInep::query()->where('cod_escola_inep', $inep)->first();
             if ($ja) {
                 $existentes++;
-                LegacyOrganization::query()->whereKey(
-                    LegacySchool::query()->whereKey($ja->cod_escola)->value('ref_idpes')
-                )->update(['fantasia' => $def['nome']]);
-                LegacyPerson::query()->whereKey(
-                    LegacySchool::query()->whereKey($ja->cod_escola)->value('ref_idpes')
-                )->update(['nome' => $def['nome']]);
-                LegacySchool::query()->whereKey($ja->cod_escola)->update([
+                $escolaId = (int) $ja->cod_escola;
+                $idpes = LegacySchool::query()->whereKey($escolaId)->value('ref_idpes');
+                LegacyOrganization::query()->whereKey($idpes)->update(['fantasia' => $def['nome']]);
+                LegacyPerson::query()->whereKey($idpes)->update([
+                    'nome' => $def['nome'],
+                    'email' => strtolower($def['sigla']).'@sme.laguna.sc.gov.br',
+                ]);
+                LegacySchool::query()->whereKey($escolaId)->update([
                     'sigla' => $def['sigla'],
                     'ativo' => 1,
                     'zona_localizacao' => $def['zona'],
+                    'latitude' => (string) $def['lat'],
+                    'longitude' => (string) $def['lng'],
                 ]);
+                $this->garantirTelefoneEscola((int) $idpes, $def['fone']);
+                $this->garantirEnderecoEscola((int) $idpes, $def);
 
                 continue;
             }
@@ -215,13 +206,24 @@ final class LagunaPovoarCidadeService
             if ($i === 0) {
                 $modelo = LegacySchool::query()->where('ativo', 1)->orderBy('cod_escola')->first();
                 if ($modelo) {
-                    LegacyPerson::query()->whereKey($modelo->ref_idpes)->update(['nome' => $def['nome']]);
+                    LegacyPerson::query()->whereKey($modelo->ref_idpes)->update([
+                        'nome' => $def['nome'],
+                        'email' => strtolower($def['sigla']).'@sme.laguna.sc.gov.br',
+                    ]);
                     LegacyOrganization::query()->whereKey($modelo->ref_idpes)->update(['fantasia' => $def['nome']]);
-                    $modelo->update(['sigla' => $def['sigla'], 'zona_localizacao' => $def['zona'], 'ativo' => 1]);
+                    $modelo->update([
+                        'sigla' => $def['sigla'],
+                        'zona_localizacao' => $def['zona'],
+                        'ativo' => 1,
+                        'latitude' => (string) $def['lat'],
+                        'longitude' => (string) $def['lng'],
+                    ]);
                     SchoolInep::query()->updateOrCreate(
                         ['cod_escola' => $modelo->getKey()],
                         ['cod_escola_inep' => $inep, 'nome_inep' => $def['nome'], 'fonte' => 'LAGUNA_POC']
                     );
+                    $this->garantirTelefoneEscola((int) $modelo->ref_idpes, $def['fone']);
+                    $this->garantirEnderecoEscola((int) $modelo->ref_idpes, $def);
                     $existentes++;
 
                     continue;
@@ -259,6 +261,8 @@ final class LagunaPovoarCidadeService
                 'zona_localizacao' => $def['zona'],
                 'nao_ha_funcionarios_para_funcoes' => false,
                 'data_cadastro' => now(),
+                'latitude' => (string) $def['lat'],
+                'longitude' => (string) $def['lng'],
             ];
 
             // Campos opcionais do Educacenso quando existirem no modelo/fillable.
@@ -278,10 +282,99 @@ final class LagunaPovoarCidadeService
                 'nome_inep' => $def['nome'],
                 'fonte' => 'LAGUNA_POC',
             ]);
+            $this->garantirTelefoneEscola((int) $pessoa->getKey(), $def['fone']);
+            $this->garantirEnderecoEscola((int) $pessoa->getKey(), $def);
             $criadas++;
         }
 
         return "criadas={$criadas} atualizadas={$existentes} total=".LegacySchool::query()->where('ativo', 1)->count();
+    }
+
+    private function garantirTelefoneEscola(int $idpes, string $fone): void
+    {
+        if ($idpes <= 0 || $fone === '') {
+            return;
+        }
+
+        DB::table('cadastro.fone_pessoa')->updateOrInsert(
+            [
+                'idpes' => $idpes,
+                'tipo' => 1,
+            ],
+            [
+                'ddd' => 48,
+                'fone' => (int) $fone,
+                'origem_gravacao' => 'M',
+                'idpes_cad' => self::USUARIO_CAD,
+                'data_cad' => now(),
+                'operacao' => 'I',
+            ]
+        );
+    }
+
+    /**
+     * @param  array{
+     *   logradouro:string,numero:string,bairro:string,cep:string,lat:float,lng:float
+     * }  $def
+     */
+    private function garantirEnderecoEscola(int $idpes, array $def): void
+    {
+        if ($idpes <= 0 || ! Schema::hasTable('places') || ! Schema::hasTable('person_has_place')) {
+            return;
+        }
+
+        $cityId = $this->cidadeLagunaId();
+        if ($cityId === null) {
+            return;
+        }
+
+        $postal = (int) preg_replace('/\D+/', '', (string) ($def['cep'] ?? '88790000'));
+        $placeId = DB::table('person_has_place')
+            ->where('person_id', $idpes)
+            ->where('type', 1)
+            ->value('place_id');
+
+        $dados = [
+            'city_id' => $cityId,
+            'address' => (string) $def['logradouro'],
+            'number' => (string) ($def['numero'] ?? ''),
+            'complement' => null,
+            'neighborhood' => (string) $def['bairro'],
+            'postal_code' => $postal > 0 ? $postal : 88790000,
+            'latitude' => (string) $def['lat'],
+            'longitude' => (string) $def['lng'],
+            'updated_at' => now(),
+        ];
+
+        if ($placeId) {
+            DB::table('places')->where('id', $placeId)->update($dados);
+        } else {
+            $placeId = DB::table('places')->insertGetId($dados + ['created_at' => now()]);
+            DB::table('person_has_place')->updateOrInsert(
+                ['person_id' => $idpes, 'type' => 1],
+                [
+                    'place_id' => $placeId,
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ]
+            );
+        }
+    }
+
+    private function cidadeLagunaId(): ?int
+    {
+        if (! Schema::hasTable('cities')) {
+            return null;
+        }
+
+        $id = DB::table('cities')->where('ibge_code', 4209102)->value('id');
+        if ($id) {
+            return (int) $id;
+        }
+
+        $id = DB::table('cities')->whereRaw('lower(name) = ?', ['laguna'])->value('id');
+
+        return $id ? (int) $id : null;
     }
 
     private function clonarOfertaEscolar(): string
@@ -559,7 +652,84 @@ final class LagunaPovoarCidadeService
             'ieducar_login_footer' => '<p>Prefeitura Municipal de Laguna / SC — SME · PoC PE-77/2026</p>',
         ]);
 
-        return 'Prefeitura Municipal de Laguna / SME · IBGE 4209102';
+        $mapa = [
+            'prematricula.city' => ['value' => 'Laguna', 'type' => 'string'],
+            'prematricula.state' => ['value' => 'SC', 'type' => 'string'],
+            'prematricula.ibge_codes' => ['value' => '4209102', 'type' => 'string'],
+            'prematricula.map.lat' => ['value' => (string) self::MAP_LAT, 'type' => 'float'],
+            'prematricula.map.lng' => ['value' => (string) self::MAP_LNG, 'type' => 'float'],
+            'prematricula.map.zoom' => ['value' => '13', 'type' => 'integer'],
+            'prematricula.slogan' => ['value' => 'Prefeitura Municipal de ', 'type' => 'string'],
+        ];
+
+        foreach ($mapa as $key => $meta) {
+            DB::table('settings')->updateOrInsert(
+                ['key' => $key],
+                [
+                    'value' => $meta['value'],
+                    'type' => $meta['type'],
+                    'description' => $key,
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ]
+            );
+        }
+
+        $this->garantirSetorVagasLaguna();
+
+        return 'Prefeitura Municipal de Laguna / SME · IBGE 4209102 · mapa '.$mapa['prematricula.map.lat']['value'].','.$mapa['prematricula.map.lng']['value'];
+    }
+
+    /**
+     * Preenche o setor do módulo «vagas» nas diretivas Laguna (editável no painel do módulo).
+     * Não sobrescreve campos já preenchidos pela cidade.
+     */
+    private function garantirSetorVagasLaguna(): void
+    {
+        if (! class_exists(\iEducar\Packages\BuritiLagunaAmbiente\Support\ModuloConfiguracao::class)) {
+            return;
+        }
+
+        $cfg = \iEducar\Packages\BuritiLagunaAmbiente\Support\ModuloConfiguracao::class;
+        $salvas = $cfg::diretivasSalvas('vagas');
+        $padrao = [
+            'setor_nome' => 'Setor de Vagas / Matrícula — SME Laguna',
+            'setor_endereco' => 'Secretaria Municipal de Educação · Laguna/SC',
+            'setor_horario' => 'Segunda a sexta, 8h–12h e 13h30–17h',
+            'setor_telefone' => '4836441000',
+            'setor_email' => 'vagas@sme.laguna.sc.gov.br',
+            'setor_observacao' => 'Traga documento da criança e do responsável. Guarde o protocolo da inscrição digital.',
+            'portal_externo' => true,
+            'aparecer_na_home' => true,
+        ];
+        $mudou = false;
+        foreach ($padrao as $chave => $valor) {
+            $atual = $salvas[$chave] ?? null;
+            $vazio = $atual === null || $atual === '' || $atual === false;
+            if ($vazio) {
+                $salvas[$chave] = $valor;
+                $mudou = true;
+            }
+        }
+        if (! $mudou) {
+            return;
+        }
+
+        $json = json_encode($salvas, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if ($json === false) {
+            return;
+        }
+
+        DB::table('settings')->updateOrInsert(
+            ['key' => $cfg::settingDiretivasKey('vagas')],
+            [
+                'value' => $json,
+                'type' => 'string',
+                'description' => 'Diretivas do módulo Pré-matrícula / vagas',
+                'updated_at' => now(),
+                'created_at' => now(),
+            ]
+        );
     }
 
     private function resumo(): string

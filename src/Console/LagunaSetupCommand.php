@@ -13,6 +13,7 @@ class LagunaSetupCommand extends Command
                             {--skip-municipal : Não chama ieducar:setup}
                             {--skip-matriculas : Não gera matrículas de teste}
                             {--skip-povoar : Não povoa cidade média (10+ escolas); usa caminho mínimo}
+                            {--skip-simulacao : Não simula 20 pessoas nos módulos}
                             {--por-turma=12 : Alunos por turma nas matrículas de teste}
                             {--skip-check : Não reaudita ao final}
                             {--force-production : Permite em APP_ENV=production}';
@@ -40,6 +41,7 @@ class LagunaSetupCommand extends Command
             comMatriculas: ! (bool) $this->option('skip-matriculas'),
             comPovoarCidade: ! (bool) $this->option('skip-povoar'),
             alunosPorTurma: $porTurma,
+            comSimulacaoPessoas: ! (bool) $this->option('skip-simulacao'),
         );
 
         $falhas = 0;
@@ -67,6 +69,7 @@ class LagunaSetupCommand extends Command
         } else {
             $this->info('Setup Laguna concluído.');
             $this->line('Logins PoC: CPF = senha (ex.: 42091020001 admin SME).');
+            $this->line('Simulação: /laguna-ambiente/simulacao · CLI laguna:simular-pessoas');
         }
 
         return $falhas > 0 ? self::FAILURE : self::SUCCESS;

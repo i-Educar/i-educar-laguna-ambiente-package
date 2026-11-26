@@ -1,12 +1,17 @@
 {{--
   Cabeçalho único Buriti (todos os módulos):
-  [Início · i-Educar · i-Diário]  ·  [título + descrição]  ·  [Buscar · Notificações]
-  Sem sanduíche — o menu do módulo fica na lateral.
+  [Sanduíche · Início · ícone sistema · i-Diário]  ·  [título + descrição]  ·  [modo · notificações · sair · user/foto]
+  Sanduíche (só aqui) colapsa a lateral para somente ícones.
+  No topo da lateral: brasão do Brasil + marca i-Educar (não clicáveis).
 --}}
 @php
     $homeModulo = $homeModulo ?? url('/');
-    $nomeModulo = $nomeModulo ?? ($identidade['nome'] ?? 'Módulo');
+    $nomeModulo = mb_strtoupper((string) ($nomeModulo ?? ($identidade['nome'] ?? 'Módulo')), 'UTF-8');
     $descricaoModulo = $descricaoModulo ?? ($identidade['descricao'] ?? null);
+    $brasaoUrl = asset('vendor/buriti/brasil.png');
+    $ieducarMarcaUrl = 'https://i-educar.github.io/assets/img/brand-mark.svg';
+    $ieducarMarcaFallback = asset('vendor/buriti/ieducar-brand-mark.svg');
+    $ieducarSistemaIcone = '/svg/i-educar-fav.svg';
     $ieducarHome = \Illuminate\Support\Facades\Route::has('home') ? route('home') : url('/intranet/index.php');
     $idiarioUrl = class_exists(\App\Support\IdiarioPortal::class)
         ? (\App\Support\IdiarioPortal::urlEntrada() ?? \App\Support\IdiarioPortal::url())
@@ -14,34 +19,42 @@
     $notificacoesUrl = \Illuminate\Support\Facades\Route::has('notifications.index')
         ? route('notifications.index')
         : url('/notificacoes');
-
-    // Itens para busca rápida no próprio módulo (lateral)
-    $itensBusca = [];
-    foreach (($menuGrupos ?? $grupos ?? []) as $g) {
-        foreach (($g['itens'] ?? []) as $item) {
-            if (empty($item['url']) || empty($item['rotulo'])) {
-                continue;
-            }
-            $itensBusca[] = [
-                'rotulo' => (string) $item['rotulo'],
-                'url' => url($item['url']),
-                'grupo' => (string) ($g['nome'] ?? ''),
-                'icone' => (string) ($item['icone'] ?? 'fa-circle-o'),
-            ];
-        }
-    }
+    $loggedUserTopo = session('logged_user');
+    $fotoUsuarioTopo = session('logged_user_picture') ?: asset('intranet/imagens/user-perfil.png');
+    $nomeUsuarioTopo = is_object($loggedUserTopo) ? ($loggedUserTopo->name ?? 'Usuário') : (is_array($loggedUserTopo) ? ($loggedUserTopo['name'] ?? 'Usuário') : 'Usuário');
+    $logoutUrl = url('/intranet/logof.php');
 @endphp
+{{-- Tokens + anti-FOUC do modo (módulos não passam pelo layout core) --}}
+<script>
+(function () {
+    try {
+        var m = localStorage.getItem('buriti.tema.modo');
+        if (m !== 'claro' && m !== 'escuro') m = 'claro';
+        document.documentElement.setAttribute('data-buriti-modo', m);
+        if (document.body) document.body.setAttribute('data-buriti-modo', m);
+    } catch (e) {
+        document.documentElement.setAttribute('data-buriti-modo', 'claro');
+    }
+})();
+</script>
+<link rel="stylesheet" href="/vendor/buriti-tema/tokens.css?v=9">
 @include('buriti-ui::estilos')
 <header class="topo topo-buriti" role="banner">
     <div class="topo-esq">
+        <button type="button"
+                class="acao-topo-buriti buriti-lateral-toggle"
+                data-buriti-lateral-toggle
+                aria-pressed="false"
+                aria-controls="buriti-lateral"
+                title="Recolher menu"
+                aria-label="Recolher ou expandir menu lateral">
+            <i class="fa fa-bars" aria-hidden="true" data-buriti-lateral-icone></i>
+        </button>
         <a class="acao-topo-buriti" href="{{ $homeModulo }}" title="Início do módulo" aria-label="Início do módulo">
             <i class="fa fa-home" aria-hidden="true"></i>
         </a>
-        <a class="acao-topo-buriti" href="{{ $ieducarHome }}" title="i-Educar" aria-label="Abrir i-Educar">
-            <svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true">
-                <path fill="currentColor" d="M13.12,10,8.06,1.22,2.88,10l.65.39.32-.53a1.93,1.93,0,0,1,1.57-.77A1.78,1.78,0,0,1,7.29,10.7H8.71a1.77,1.77,0,0,1,1.86-1.62,2,2,0,0,1,1.78,1.1h0l.11.2ZM10.57,8.32A2.58,2.58,0,0,0,8,10.22,2.6,2.6,0,0,0,5.42,8.31a2.84,2.84,0,0,0-.72.1L8.05,2.74l3.28,5.68A2.68,2.68,0,0,0,10.57,8.32Z"/>
-                <polygon fill="#8314f7" points="7.04 5.32 8.98 5.32 8.01 3.73 7.04 5.32"/>
-            </svg>
+        <a class="acao-topo-buriti acao-sistema-icone" href="{{ $ieducarHome }}" title="i-Educar" aria-label="Abrir i-Educar">
+            <img src="{{ $ieducarSistemaIcone }}" width="22" height="22" alt="i-Educar">
         </a>
         @if(!empty($idiarioUrl))
             <a class="acao-topo-buriti" href="{{ $idiarioUrl }}" title="i-Diário" aria-label="Abrir i-Diário" target="_blank" rel="noopener">
@@ -64,33 +77,13 @@
     <div class="topo-dir">
         {!! $topoExtraDir ?? '' !!}
 
-        <div class="menu-drop-buriti" data-drop-buriti data-drop-busca>
-            <button type="button" class="acao-topo-buriti" aria-expanded="false" aria-haspopup="true" title="Buscar" aria-label="Buscar no módulo">
-                <i class="fa fa-search" aria-hidden="true"></i>
-            </button>
-            <div class="gaveta-buriti gaveta-busca" role="dialog" aria-label="Busca rápida">
-                <label class="busca-campo">
-                    <span class="sr-only">Buscar</span>
-                    <input type="search" placeholder="Buscar telas deste módulo…" autocomplete="off" data-busca-topo>
-                </label>
-                <div class="busca-lista" data-busca-lista>
-                    @forelse($itensBusca as $item)
-                        <a role="menuitem" href="{{ $item['url'] }}" data-busca-item="{{ mb_strtolower($item['rotulo'].' '.$item['grupo']) }}">
-                            <i class="fa {{ $item['icone'] }}"></i>
-                            <span>
-                                <strong>{{ $item['rotulo'] }}</strong>
-                                @if($item['grupo'] !== '')
-                                    <small>{{ $item['grupo'] }}</small>
-                                @endif
-                            </span>
-                        </a>
-                    @empty
-                        <p class="busca-vazio">Nenhum atalho cadastrado neste módulo.</p>
-                    @endforelse
-                </div>
-                <a class="busca-ieducar" href="{{ $ieducarHome }}"><i class="fa fa-external-link"></i> Busca no i-Educar</a>
-            </div>
-        </div>
+        <button type="button"
+                class="acao-topo-buriti buriti-modo-toggle"
+                data-buriti-modo-toggle
+                title="Alternar modo claro ou escuro"
+                aria-label="Alternar modo claro ou escuro">
+            <i class="fa fa-moon-o" aria-hidden="true" data-buriti-modo-icone></i>
+        </button>
 
         <div class="menu-drop-buriti" data-drop-buriti data-drop-notif>
             <button type="button" class="acao-topo-buriti" aria-expanded="false" aria-haspopup="true"
@@ -113,6 +106,30 @@
                 </div>
             </div>
         </div>
+
+        <a class="acao-topo-buriti acao-sair" href="{{ $logoutUrl }}" title="Sair" aria-label="Sair">
+            <i class="fa fa-sign-out" aria-hidden="true"></i>
+        </a>
+
+        <div class="menu-drop-buriti menu-user-buriti" data-drop-buriti data-drop-user>
+            <button type="button" class="acao-topo-buriti user-foto-btn" aria-expanded="false" aria-haspopup="true"
+                    title="{{ $nomeUsuarioTopo }}" aria-label="Conta de {{ $nomeUsuarioTopo }}">
+                <img class="avatar-topo" src="{{ $fotoUsuarioTopo }}" alt="Perfil" width="28" height="28">
+            </button>
+            <div class="gaveta-buriti" role="menu" aria-label="Conta">
+                <div class="rotulo">{{ $nomeUsuarioTopo }}</div>
+                <a role="menuitem" href="{{ url('/intranet/meusdados.php') }}">
+                    <i class="fa fa-id-card" aria-hidden="true"></i> Meus dados
+                </a>
+                <a role="menuitem" href="{{ url('/intranet/agenda.php') }}">
+                    <i class="fa fa-calendar" aria-hidden="true"></i> Agenda
+                </a>
+                <div class="sep"></div>
+                <a role="menuitem" href="{{ $logoutUrl }}">
+                    <i class="fa fa-sign-out" aria-hidden="true"></i> Sair
+                </a>
+            </div>
+        </div>
     </div>
 </header>
 <script>
@@ -125,11 +142,136 @@
     var URL_READ = @json(url('/notificacoes/marca-como-lida'));
     var URL_READ_ALL = @json(url('/notificacoes/marca-todas-como-lidas'));
     var CSRF = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
+    var KEY_MODO = 'buriti.tema.modo';
 
-    /* Remove sanduíches injetados por layouts antigos */
-    document.querySelectorAll('[data-topo-extra-esq] .hamburguer, [data-topo-extra-esq] [aria-label*="Abrir módulos"], [data-topo-extra-esq] .fa-bars').forEach(function (el) {
+    function modoAtual() {
+        var m = document.documentElement.getAttribute('data-buriti-modo');
+        return m === 'escuro' ? 'escuro' : 'claro';
+    }
+    function aplicarModo(modo) {
+        modo = modo === 'escuro' ? 'escuro' : 'claro';
+        document.documentElement.setAttribute('data-buriti-modo', modo);
+        if (document.body) document.body.setAttribute('data-buriti-modo', modo);
+        try { localStorage.setItem(KEY_MODO, modo); } catch (e) {}
+        document.querySelectorAll('[data-buriti-modo-toggle]').forEach(function (btn) {
+            var ico = btn.querySelector('[data-buriti-modo-icone]') || btn.querySelector('i');
+            var escuro = modo === 'escuro';
+            btn.title = escuro ? 'Mudar para modo claro' : 'Mudar para modo escuro';
+            btn.setAttribute('aria-label', btn.title);
+            btn.setAttribute('aria-pressed', escuro ? 'true' : 'false');
+            if (ico) {
+                ico.className = escuro ? 'fa fa-sun-o' : 'fa fa-moon-o';
+            }
+        });
+    }
+    aplicarModo(modoAtual());
+    document.addEventListener('click', function (e) {
+        var btn = e.target && e.target.closest && e.target.closest('[data-buriti-modo-toggle]');
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        aplicarModo(modoAtual() === 'escuro' ? 'claro' : 'escuro');
+    });
+
+    /* Remove sanduíches duplicados de layouts antigos (mantém o toggle Buriti) */
+    document.querySelectorAll('[data-topo-extra-esq] .hamburguer, [data-topo-extra-esq] [aria-label*="Abrir módulos"]').forEach(function (el) {
+        if (el.closest('[data-buriti-lateral-toggle]')) return;
         var btn = el.closest('button, a') || el;
         if (btn && btn.parentNode) btn.parentNode.removeChild(btn);
+    });
+
+    var KEY_LATERAL = 'buriti.lateral.icones';
+    var BRASAO_URL = @json($brasaoUrl);
+    var IEDUCAR_MARCA_URL = @json($ieducarMarcaUrl);
+    var IEDUCAR_MARCA_FALLBACK = @json($ieducarMarcaFallback);
+    function lateralEl() {
+        return document.querySelector('aside.lateral, .app > .lateral, [data-buriti-lateral]');
+    }
+    function garantirMarcaOrgNaLateral() {
+        var lat = lateralEl();
+        if (!lat) return null;
+        if (!lat.id) lat.id = 'buriti-lateral';
+        /* remove sanduíche antigo injetado na lateral */
+        lat.querySelectorAll('[data-buriti-lateral-toggle-rail], .buriti-rail-toggle').forEach(function (el) {
+            var wrap = el.closest('.buriti-rail-topo') || el;
+            if (wrap && wrap.parentNode) wrap.parentNode.removeChild(wrap);
+        });
+        var existente = lat.querySelector('[data-buriti-org-marca]');
+        if (existente
+            && existente.querySelector('[data-buriti-brasao]')
+            && existente.querySelector('[data-buriti-ieducar-marca]')
+            && existente.tagName !== 'A') {
+            return existente;
+        }
+        if (existente) {
+            var antigo = existente.closest('.buriti-rail-topo') || existente;
+            if (antigo && antigo.parentNode) antigo.parentNode.removeChild(antigo);
+        }
+        var wrap = document.createElement('div');
+        wrap.className = 'buriti-rail-topo';
+        wrap.setAttribute('data-buriti-org-marca', '1');
+        wrap.setAttribute('role', 'img');
+        wrap.setAttribute('aria-label', 'Brasão da República e marca i-Educar');
+        wrap.innerHTML =
+            '<span class="buriti-marca-selo" data-buriti-brasao title="Brasão da República Federativa do Brasil">'
+            + '<img src="' + BRASAO_URL + '" width="34" height="34" alt="Brasão do Brasil" draggable="false">'
+            + '</span>'
+            + '<span class="buriti-marca-selo" data-buriti-ieducar-marca title="i-Educar">'
+            + '<img src="' + IEDUCAR_MARCA_URL + '" width="34" height="34" alt="i-Educar" draggable="false"'
+            + ' onerror="this.onerror=null;this.src=\'' + IEDUCAR_MARCA_FALLBACK.replace(/'/g, "\\'") + '\'">'
+            + '</span>';
+        lat.insertBefore(wrap, lat.firstChild);
+        return wrap;
+    }
+    function aplicarLateralIcones(on) {
+        garantirMarcaOrgNaLateral();
+        document.documentElement.classList.toggle('buriti-lateral-icones', !!on);
+        document.body.classList.toggle('buriti-lateral-icones', !!on);
+        var app = document.querySelector('.app');
+        if (app) app.classList.toggle('buriti-lateral-icones', !!on);
+        var lat = lateralEl();
+        if (lat) {
+            lat.classList.toggle('is-icones', !!on);
+            if (!lat.id) lat.id = 'buriti-lateral';
+        }
+        /* Só o sanduíche do cabeçalho — nunca o trilho da lateral */
+        document.querySelectorAll('.topo-buriti [data-buriti-lateral-toggle]').forEach(function (btn) {
+            btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+            btn.title = on ? 'Expandir menu' : 'Recolher menu';
+            btn.setAttribute('aria-label', on ? 'Expandir menu lateral' : 'Recolher menu lateral');
+            var ico = btn.querySelector('[data-buriti-lateral-icone]') || btn.querySelector('i');
+            if (ico) {
+                ico.className = on ? 'fa fa-chevron-right' : 'fa fa-bars';
+            }
+        });
+        /* Tooltip nos itens quando só há ícone */
+        document.querySelectorAll('.lateral .modulo a, .lateral nav a').forEach(function (a) {
+            if (!a.getAttribute('title') || a.dataset.buritiTitleAuto === '1') {
+                var t = (a.textContent || '').replace(/\s+/g, ' ').trim();
+                if (t) {
+                    a.setAttribute('title', t);
+                    a.dataset.buritiTitleAuto = '1';
+                }
+            }
+        });
+        try { localStorage.setItem(KEY_LATERAL, on ? '1' : '0'); } catch (e) {}
+    }
+    function lateralIconesAtivo() {
+        return document.body.classList.contains('buriti-lateral-icones');
+    }
+    garantirMarcaOrgNaLateral();
+    try {
+        if (localStorage.getItem(KEY_LATERAL) === '1') aplicarLateralIcones(true);
+        else aplicarLateralIcones(false);
+    } catch (e) {
+        aplicarLateralIcones(false);
+    }
+    document.addEventListener('click', function (e) {
+        var tgl = e.target && e.target.closest && e.target.closest('[data-buriti-lateral-toggle]');
+        if (!tgl) return;
+        e.preventDefault();
+        e.stopPropagation();
+        aplicarLateralIcones(!lateralIconesAtivo());
     });
 
     function fecharTodos(exceto) {
@@ -176,6 +318,29 @@
             .replace(/"/g, '&quot;');
     }
 
+    /** DD/MM/YYYY HH:mm + rótulo humanizado (hoje/ontem/há X). */
+    function formatarDataHoraBr(valor) {
+        if (!valor) return '';
+        var d = new Date(valor);
+        if (isNaN(d.getTime())) return String(valor);
+        function pad(n) { return n < 10 ? '0' + n : String(n); }
+        var abs = pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear()
+            + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+        var agora = new Date();
+        var diffMs = agora.getTime() - d.getTime();
+        if (diffMs < 0) return abs;
+        var diffMin = Math.floor(diffMs / 60000);
+        if (diffMin < 1) return 'agora · ' + abs;
+        if (diffMin < 60) return 'há ' + diffMin + ' min · ' + abs;
+        var mesmoDia = d.toDateString() === agora.toDateString();
+        var ontem = new Date(agora); ontem.setDate(agora.getDate() - 1);
+        if (mesmoDia) return 'hoje às ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ' · ' + abs;
+        if (d.toDateString() === ontem.toDateString()) {
+            return 'ontem às ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ' · ' + abs;
+        }
+        return abs;
+    }
+
     var listaCarregada = false;
 
     function renderLista(items) {
@@ -188,8 +353,7 @@
         box.innerHTML = items.map(function (v) {
             var unread = !v.read_at;
             var cls = unread ? 'notif-item unread' : 'notif-item read';
-            var d = v.created_at ? new Date(v.created_at) : null;
-            var data = d && !isNaN(d.getTime()) ? d.toLocaleString('pt-BR') : '';
+            var data = formatarDataHoraBr(v.created_at);
             var href = v.link || '#';
             return '<a class="' + cls + '" href="' + escapar(href) + '" data-id="' + escapar(v.id) + '" data-notif-item>'
                 + '<p>' + (v.text || '') + '</p>'
@@ -274,13 +438,9 @@
             var aberto = wrap.classList.toggle('aberto');
             btn.setAttribute('aria-expanded', aberto ? 'true' : 'false');
             fecharTodos(wrap);
-            if (aberto) {
-                var input = wrap.querySelector('[data-busca-topo]');
-                if (input) setTimeout(function () { input.focus(); }, 30);
-                if (wrap.hasAttribute('data-drop-notif')) {
-                    carregarLista();
-                    carregarContagem();
-                }
+            if (aberto && wrap.hasAttribute('data-drop-notif')) {
+                carregarLista();
+                carregarContagem();
             }
             return;
         }
@@ -291,18 +451,6 @@
 
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') fecharTodos();
-    });
-
-    document.addEventListener('input', function (e) {
-        var input = e.target;
-        if (!input || !input.matches || !input.matches('[data-busca-topo]')) return;
-        var q = (input.value || '').toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
-        var lista = input.closest('.gaveta-busca');
-        if (!lista) return;
-        lista.querySelectorAll('[data-busca-item]').forEach(function (a) {
-            var txt = (a.getAttribute('data-busca-item') || '').normalize('NFD').replace(/\p{M}/gu, '');
-            a.style.display = (!q || txt.indexOf(q) !== -1) ? '' : 'none';
-        });
     });
 
     carregarContagem();

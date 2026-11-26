@@ -21,6 +21,7 @@ final class LagunaSetupService
         bool $comMatriculas = true,
         bool $comPovoarCidade = true,
         int $alunosPorTurma = 12,
+        bool $comSimulacaoPessoas = true,
     ): array {
         $passos = [];
 
@@ -85,8 +86,14 @@ final class LagunaSetupService
         $passos[] = $this->chamarSeExistir('transporte:passagem-empenho-demo', [], 'Demo transporte passagem/empenho');
         $passos[] = $this->chamarSeExistir('exportacao:demo', [], 'Demo exportação unificada (múltiplos formatos)');
 
-        // Quando --skip-povoar, ainda assim carrega processos multi-etapa (se rede mínima existir).
+        // Quando --skip-povoar, ainda assim carrega demos multi-etapa (rede mínima).
+        // Com povoar-cidade, pré-matrícula já entra via LagunaCargaCenarios → prematricula:povoar.
         if (! $comPovoarCidade) {
+            $passos[] = $this->chamarSeExistir(
+                'prematricula:povoar',
+                ['--por-status' => 3],
+                'Pré-matrícula: processos + inscrições (todos os cenários)',
+            );
             $passos[] = $this->chamarSeExistir('busca-ativa:demo', ['--faltas' => 20], 'Busca Ativa multi-etapa / atores');
             $passos[] = $this->chamarSeExistir('solicitacao:demo', [], 'Chamados multi-etapa / atores');
             $passos[] = $this->chamarSeExistir('atendimento:demo', [], 'Fila atendimento multi-situação');
@@ -101,6 +108,15 @@ final class LagunaSetupService
         $passos[] = $this->garantirCardapioFallback();
         $passos[] = $this->garantirResumoRede($comPovoarCidade);
         $passos[] = app(LagunaIdiarioVinculoService::class)->executar();
+
+        if ($comSimulacaoPessoas) {
+            $sim = app(LagunaSimulacaoPessoasService::class)->executar(20);
+            $passos[] = [
+                'passo' => $sim['passo'],
+                'ok' => $sim['ok'],
+                'saida' => $sim['saida'].($sim['lote_id'] ? ' · UI /laguna-ambiente/simulacao' : ''),
+            ];
+        }
 
         return $passos;
     }
