@@ -303,10 +303,36 @@ final class AmbienteAuditor
         $cache = [];
         try {
             foreach (Artisan::all() as $name => $command) {
-                $cache[$name] = true;
+                $cache[(string) $name] = true;
             }
         } catch (\Throwable) {
             //
+        }
+
+        // Em requisição HTTP, muitos providers só chamam $this->commands() em
+        // runningInConsole() — Artisan::all() fica incompleto e gera falso negativo.
+        if (! app()->runningInConsole()) {
+            try {
+                $php = PHP_BINARY ?: 'php';
+                $artisan = base_path('artisan');
+                $lines = [];
+                $code = 0;
+                exec(
+                    escapeshellarg($php).' '.escapeshellarg($artisan).' list --raw 2>/dev/null',
+                    $lines,
+                    $code
+                );
+                if ($code === 0) {
+                    foreach ($lines as $line) {
+                        $name = strtok(trim((string) $line), " \t");
+                        if (is_string($name) && $name !== '') {
+                            $cache[$name] = true;
+                        }
+                    }
+                }
+            } catch (\Throwable) {
+                //
+            }
         }
 
         return $cache;
