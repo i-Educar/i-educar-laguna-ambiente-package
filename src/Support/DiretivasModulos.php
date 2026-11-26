@@ -746,10 +746,24 @@ final class DiretivasModulos
                 'prefixos_rota' => [],
             ],
             'servidor' => [
-                'guia' => 'RH congrega horário, ACT e eventos (ocultos como cartões separados). Mantenha ativo se a cidade usa o pacote RH.',
+                'guia' => 'RH congrega horário, ACT e eventos (ocultos como cartões separados). Mantenha ativo se a cidade usa o pacote RH. Informe o setor de RH/Servidores da SME para o botão «i» de informes.',
                 'diretivas' => array_merge([
                     self::ativo(),
-                ], SetorResponsavel::diretivas()),
+                ], array_map(static function (array $d): array {
+                    $padroes = [
+                        'setor_nome' => 'Setor de RH / Gestão de Pessoas',
+                        'setor_endereco' => 'SME Laguna — RH / Servidores',
+                        'setor_horario' => 'Seg a sex, 8h–12h e 13h30–17h',
+                        'setor_telefone' => '(48) 3644-4500',
+                        'setor_email' => 'rh@laguna.sc.gov.br',
+                        'setor_observacao' => 'Lotação, afastamento e documentos funcionais: procure o setor de RH com identificação funcional.',
+                    ];
+                    if (isset($padroes[$d['chave']])) {
+                        $d['padrao'] = $padroes[$d['chave']];
+                    }
+
+                    return $d;
+                }, SetorResponsavel::diretivas())),
                 'impactos_desativar' => [
                     'Extensões do domínio servidor educacional deixam de carregar.',
                 ],
