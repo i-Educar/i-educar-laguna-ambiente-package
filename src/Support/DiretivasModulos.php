@@ -119,7 +119,21 @@ final class DiretivasModulos
                             ['value' => 'alunos', 'label' => 'Por alunos embarcados'],
                         ],
                     ],
-                ], SetorResponsavel::diretivas()),
+                ], array_map(static function (array $d): array {
+                    $padroes = [
+                        'setor_nome' => 'Setor de Transporte Escolar',
+                        'setor_endereco' => 'SME Laguna — Transporte Escolar',
+                        'setor_horario' => 'Seg a sex, 8h–12h e 13h30–17h',
+                        'setor_telefone' => '(48) 3644-4600',
+                        'setor_email' => 'transporte@laguna.sc.gov.br',
+                        'setor_observacao' => 'Pedidos de vaga pelo portal da família. Dúvidas de rota/ponto: procure o setor com RG do responsável e matrícula do aluno.',
+                    ];
+                    if (isset($padroes[$d['chave']])) {
+                        $d['padrao'] = $padroes[$d['chave']];
+                    }
+
+                    return $d;
+                }, SetorResponsavel::diretivas())),
                 'impactos_desativar' => [
                     'Cadastro de rotas, veículos e embarque/desembarque fica inacessível.',
                     'Portal da família e carteirinhas deixam de operar.',
