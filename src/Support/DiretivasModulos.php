@@ -337,14 +337,38 @@ final class DiretivasModulos
                         'rotulo' => 'Orientação aos polos escolares',
                         'tipo' => 'textarea',
                         'config' => null,
-                        'padrao' => '',
+                        'padrao' => 'Atendimento na sala da coordenação, terças e quintas, 9h–11h. Encaminhar pela ficha do aluno no i-Educar.',
                         'grupo' => 'regras',
                         'maxlength' => 500,
                         'ajuda' => 'Texto padrão para a escola quando for ponto de atendimento (sala, horário, responsável).',
                         'placeholder' => 'Atendimento na sala da coordenação, terças e quintas, 9h–11h. Encaminhar pela ficha do aluno.',
                         'wide' => true,
                     ],
-                ], SetorResponsavel::diretivas(), RedeApoio::diretivas()),
+                ], array_map(static function (array $d): array {
+                    $padroes = [
+                        'setor_nome' => 'Setor de Atendimento ao Estudante / Acolhimento',
+                        'setor_endereco' => 'SME Laguna — Atendimento ao Estudante',
+                        'setor_horario' => 'Seg a sex, 8h–12h e 13h30–17h',
+                        'setor_telefone' => '(48) 3644-4200',
+                        'setor_email' => 'atendimento@laguna.sc.gov.br',
+                        'setor_observacao' => 'Leve RG do responsável e documentação escolar. Casos urgentes: acione a rede de proteção.',
+                        'rede_conselho_nome' => 'Conselho Tutelar de Laguna',
+                        'rede_conselho_endereco' => 'Laguna/SC — polo municipal (atualizar endereço oficial)',
+                        'rede_conselho_telefone' => '(48) 3644-4300',
+                        'rede_conselho_email' => 'conselhotutelar@laguna.sc.gov.br',
+                        'rede_cras_nome' => 'CRAS Laguna',
+                        'rede_cras_telefone' => '(48) 3644-4310',
+                        'rede_cras_endereco' => 'Laguna/SC — referência CRAS (atualizar endereço oficial)',
+                        'rede_creas_nome' => 'CREAS Laguna',
+                        'rede_creas_telefone' => '(48) 3644-4320',
+                        'rede_outras' => "Promotoria da Infância e Juventude — (48) 3644-4330\nCAPS Infantojuvenil — (48) 3644-4340",
+                    ];
+                    if (isset($padroes[$d['chave']])) {
+                        $d['padrao'] = $padroes[$d['chave']];
+                    }
+
+                    return $d;
+                }, array_merge(SetorResponsavel::diretivas(), RedeApoio::diretivas()))),
                 'impactos_desativar' => [
                     'Fila, agenda e registro de acolhimento ficam inacessíveis.',
                     'Alertas da Busca Ativa deixam de alimentar a fila do atendimento.',
