@@ -645,26 +645,30 @@ final class LagunaPovoarCidadeService
 
     private function garantirIdentidade(): string
     {
+        // Marca: cidade modelo (Modelópolis). Dados operacionais: rede Laguna/SC (IBGE/mapa/escolas).
         DB::table('pmieducar.instituicao')->orderBy('cod_instituicao')->update([
-            'nm_instituicao' => 'Prefeitura Municipal de Laguna',
-            'cidade' => 'Laguna',
+            'nm_instituicao' => 'Prefeitura Municipal de Modelópolis',
+            'cidade' => 'Modelópolis',
             'ref_sigla_uf' => 'SC',
         ]);
         DB::table('pmieducar.configuracoes_gerais')->update([
-            'ieducar_entity_name' => 'Secretaria Municipal de Educação de Laguna',
-            'ieducar_image' => '/intranet/imagens/logo-laguna.png',
-            'ieducar_internal_footer' => '<p>Prefeitura Municipal de Laguna — ambiente de demonstração.</p>',
-            'ieducar_login_footer' => '<p>Prefeitura Municipal de Laguna / SC — SME · PoC PE-77/2026</p>',
+            'ieducar_entity_name' => 'Secretaria Municipal de Educação de Modelópolis',
+            'ieducar_image' => '/intranet/imagens/logo-modelopolis.png',
+            'ieducar_internal_footer' => '<p>Prefeitura Municipal de Modelópolis — cidade modelo (dados Laguna/SC).</p>',
+            'ieducar_login_footer' => '<p>Prefeitura Municipal de Modelópolis / SC — SME · cidade modelo</p>',
         ]);
 
         $mapa = [
-            'prematricula.city' => ['value' => 'Laguna', 'type' => 'string'],
+            'prematricula.city' => ['value' => 'Modelópolis', 'type' => 'string'],
             'prematricula.state' => ['value' => 'SC', 'type' => 'string'],
             'prematricula.ibge_codes' => ['value' => '4209102', 'type' => 'string'],
             'prematricula.map.lat' => ['value' => (string) self::MAP_LAT, 'type' => 'float'],
             'prematricula.map.lng' => ['value' => (string) self::MAP_LNG, 'type' => 'float'],
             'prematricula.map.zoom' => ['value' => '13', 'type' => 'integer'],
             'prematricula.slogan' => ['value' => 'Prefeitura Municipal de ', 'type' => 'string'],
+            'legacy.app.template.vars.instituicao' => ['value' => 'Prefeitura Municipal de Modelópolis', 'type' => 'string'],
+            'legacy.app.entity.name' => ['value' => 'SME Modelópolis', 'type' => 'string'],
+            'legacy.report.logo_file_name' => ['value' => 'logo-modelopolis.png', 'type' => 'string'],
         ];
 
         foreach ($mapa as $key => $meta) {
@@ -682,7 +686,7 @@ final class LagunaPovoarCidadeService
 
         $this->garantirSetorVagasLaguna();
 
-        return 'Prefeitura Municipal de Laguna / SME · IBGE 4209102 · mapa '.$mapa['prematricula.map.lat']['value'].','.$mapa['prematricula.map.lng']['value'];
+        return 'Prefeitura Municipal de Modelópolis / SME · dados Laguna IBGE 4209102 · mapa '.$mapa['prematricula.map.lat']['value'].','.$mapa['prematricula.map.lng']['value'];
     }
 
     /**

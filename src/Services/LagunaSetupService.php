@@ -130,23 +130,25 @@ final class LagunaSetupService
     {
         try {
             $n = DB::table('pmieducar.instituicao')->orderBy('cod_instituicao')->update([
-                'nm_instituicao' => 'Prefeitura Municipal de Laguna',
-                'cidade' => 'Laguna',
+                'nm_instituicao' => 'Prefeitura Municipal de Modelópolis',
+                'cidade' => 'Modelópolis',
                 'ref_sigla_uf' => 'SC',
             ]);
 
             DB::table('pmieducar.configuracoes_gerais')->update([
-                'ieducar_entity_name' => 'Secretaria Municipal de Educação de Laguna',
-                'ieducar_image' => '/intranet/imagens/logo-laguna.png',
-                'ieducar_internal_footer' => '<p>Prefeitura Municipal de Laguna — ambiente de demonstração.</p>',
-                'ieducar_login_footer' => '<p>Prefeitura Municipal de Laguna / SC — SME · PoC PE-77/2026</p>',
+                'ieducar_entity_name' => 'Secretaria Municipal de Educação de Modelópolis',
+                'ieducar_image' => '/intranet/imagens/logo-modelopolis.png',
+                'ieducar_internal_footer' => '<p>Prefeitura Municipal de Modelópolis — cidade modelo (dados Laguna/SC).</p>',
+                'ieducar_login_footer' => '<p>Prefeitura Municipal de Modelópolis / SC — SME · cidade modelo</p>',
             ]);
 
             if (Schema::hasTable('settings')) {
                 DB::table('settings')->where('key', 'legacy.app.template.vars.instituicao')
-                    ->update(['value' => 'Prefeitura Municipal de Laguna']);
+                    ->update(['value' => 'Prefeitura Municipal de Modelópolis']);
                 DB::table('settings')->where('key', 'legacy.app.entity.name')
-                    ->update(['value' => 'SME Laguna']);
+                    ->update(['value' => 'SME Modelópolis']);
+                DB::table('settings')->where('key', 'legacy.report.logo_file_name')
+                    ->update(['value' => 'logo-modelopolis.png']);
             }
 
             if (class_exists(\App\Services\CacheService::class)) {
@@ -155,9 +157,9 @@ final class LagunaSetupService
             }
 
             return [
-                'passo' => 'Identidade Laguna/SC',
+                'passo' => 'Identidade Modelópolis (dados Laguna/SC)',
                 'ok' => true,
-                'saida' => "instituição + login/footer atualizados ({$n} linha(s)) · IBGE 4209102",
+                'saida' => "instituição + login/footer atualizados ({$n} linha(s)) · marca Modelópolis · IBGE Laguna 4209102",
             ];
         } catch (\Throwable $e) {
             return [

@@ -7,9 +7,11 @@ use iEducar\Packages\BuritiLagunaAmbiente\Services\AmbienteAuditor;
 use iEducar\Packages\BuritiLagunaAmbiente\Services\LagunaModuloTestesService;
 use iEducar\Packages\BuritiLagunaAmbiente\Services\LagunaSetupService;
 use iEducar\Packages\BuritiLagunaAmbiente\Services\LagunaSimulacaoPessoasService;
+use iEducar\Packages\BuritiLagunaAmbiente\Services\ModulosDeployCatalogo;
 use iEducar\Packages\BuritiLagunaAmbiente\Support\AprovacaoModulo;
 use iEducar\Packages\BuritiLagunaAmbiente\Support\CatalogoModulos;
 use iEducar\Packages\BuritiLagunaAmbiente\Support\TemaBuriti;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -25,6 +27,12 @@ class AmbienteController
             'relatorio' => $relatorio,
             'appsApi' => $this->snapshotAppsApi($relatorio),
         ]);
+    }
+
+    /** JSON: módulos ativos/instalados + versão + data do deploy CI (admin). */
+    public function modulosDeploy(ModulosDeployCatalogo $catalogo): JsonResponse
+    {
+        return response()->json($catalogo->listar());
     }
 
     public function check(AmbienteAuditor $auditor, LagunaModuloTestesService $testes): View

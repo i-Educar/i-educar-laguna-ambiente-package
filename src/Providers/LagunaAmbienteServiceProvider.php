@@ -8,9 +8,11 @@ use iEducar\Packages\BuritiLagunaAmbiente\Console\LagunaEnsaiarCommand;
 use iEducar\Packages\BuritiLagunaAmbiente\Console\LagunaIdiarioCommand;
 use iEducar\Packages\BuritiLagunaAmbiente\Console\LagunaOtimizarCommand;
 use iEducar\Packages\BuritiLagunaAmbiente\Console\LagunaPovoarCidadeCommand;
+use iEducar\Packages\BuritiLagunaAmbiente\Console\LagunaQuadroPedagogicoCommand;
 use iEducar\Packages\BuritiLagunaAmbiente\Console\LagunaSetupCommand;
 use iEducar\Packages\BuritiLagunaAmbiente\Console\LagunaSimularPessoasCommand;
 use iEducar\Packages\BuritiLagunaAmbiente\Http\Middleware\ExigeModuloAtivo;
+use iEducar\Packages\BuritiLagunaAmbiente\Http\Middleware\InjetarPainelModulosDeploy;
 use iEducar\Packages\BuritiLagunaAmbiente\Support\BuritiUi;
 use iEducar\Packages\BuritiLagunaAmbiente\Support\CatalogoModulos;
 use iEducar\Packages\BuritiLagunaAmbiente\Support\Identidade;
@@ -89,6 +91,7 @@ class LagunaAmbienteServiceProvider extends ServiceProvider
                 LagunaEnsaiarCommand::class,
                 LagunaPovoarCidadeCommand::class,
                 LagunaIdiarioCommand::class,
+                LagunaQuadroPedagogicoCommand::class,
                 LagunaOtimizarCommand::class,
                 LagunaSimularPessoasCommand::class,
             ]);
@@ -112,6 +115,7 @@ class LagunaAmbienteServiceProvider extends ServiceProvider
         $router = $this->app['router'];
         $router->aliasMiddleware('modulo.ativo', ExigeModuloAtivo::class);
         $router->pushMiddlewareToGroup('web', ExigeModuloAtivo::class);
+        $router->pushMiddlewareToGroup('web', InjetarPainelModulosDeploy::class);
         try {
             $router->pushMiddlewareToGroup('api', ExigeModuloAtivo::class);
         } catch (\Throwable) {

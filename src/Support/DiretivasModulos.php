@@ -731,7 +731,7 @@ final class DiretivasModulos
                 'prefixos_rota' => ['educacenso'],
             ],
             'assinatura' => [
-                'guia' => '1) Informe a URL da instância LibreSign/Nextcloud. 2) Credenciais do integrador (Basic Auth / App Password). 3) Contas signatárias e mapa cargo→conta. 4) Valide com «Testes LibreSign» no módulo.',
+                'guia' => '1) Informe a URL da instância LibreSign/Nextcloud. 2) Escolha o perfil de API (container 10.x ou cloud moderna). 3) Credenciais do integrador. 4) Contas signatárias e mapa cargo→conta. 5) Valide com «Testes LibreSign».',
                 'diretivas' => [
                     self::ativo(),
                     [
@@ -744,6 +744,20 @@ final class DiretivasModulos
                         'grupo' => 'libresign',
                         'ajuda' => 'Base HTTP(S) do Nextcloud com LibreSign (sem barra final). Em Docker i-Educar: http://host.docker.internal:8088',
                         'placeholder' => 'https://libresign.municipio.gov.br',
+                    ],
+                    [
+                        'chave' => 'libresign_api_perfil',
+                        'rotulo' => 'Versão / perfil da API LibreSign',
+                        'tipo' => 'select',
+                        'config' => 'assinatura.libresign.api_perfil',
+                        'padrao' => 'auto',
+                        'grupo' => 'libresign',
+                        'ajuda' => 'As diferenças entre o container Docker (LibreSign 10.x: users+identify) e a cloud/produção moderna (signers+identifyMethods) são tratadas por este perfil. Escolha o que corresponde à instância conectada.',
+                        'opcoes' => [
+                            ['value' => 'auto', 'label' => 'Automático (detecta pela URL / tenta moderno → legado)'],
+                            ['value' => 'moderno', 'label' => 'Moderno / Cloud (signers + identifyMethods)'],
+                            ['value' => 'legado_v10', 'label' => 'Legado / Container LibreSign 10.x (users + identify)'],
+                        ],
                     ],
                     [
                         'chave' => 'libresign_user',

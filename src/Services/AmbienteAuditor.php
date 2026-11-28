@@ -313,7 +313,8 @@ final class AmbienteAuditor
         // runningInConsole() — Artisan::all() fica incompleto e gera falso negativo.
         if (! app()->runningInConsole()) {
             try {
-                $php = PHP_BINARY ?: 'php';
+                // PHP_BINARY sob php-fpm costuma ser o binário FPM (não serve para artisan).
+                $php = self::phpCliBinario();
                 $artisan = base_path('artisan');
                 $lines = [];
                 $code = 0;
@@ -336,5 +337,24 @@ final class AmbienteAuditor
         }
 
         return $cache;
+    }
+
+    private static function phpCliBinario(): string
+    {
+        $bin = (string) (PHP_BINARY ?: '');
+        if ($bin !== '' && is_executable($bin) && ! preg_match('/fpm|php-fpm/i', $bin)) {
+            return $bin;
+        }
+
+        foreach (['/usr/bin/php', '/usr/local/bin/php', 'php'] as $candidato) {
+            if ($candidato === 'php') {
+                return 'php';
+            }
+            if (is_executable($candidato)) {
+                return $candidato;
+            }
+        }
+
+        return 'php';
     }
 }

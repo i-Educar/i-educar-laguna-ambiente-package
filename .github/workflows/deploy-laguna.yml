@@ -21,19 +21,20 @@ concurrency:
   group: deploy-laguna-${{ github.repository }}
   cancel-in-progress: false
 
+# Write de git (bump/tag) fica no LAGUNA_DEPLOY_TOKEN dentro do reusable.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   deploy:
+    # Bump de versão do CI committa com [skip ci] — evita loop de deploy.
+    if: ${{ github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]') }}
+    # Hub: reusable do mesmo commit (equivalente a pin SHA).
     uses: ./.github/workflows/reusable-deploy-laguna.yml
     with:
       package_repo: i-educar-laguna-ambiente-package
       server_path: packages/buriti/i-educar-laguna-ambiente-package
+      environment: laguna-production
       run_tests: ${{ github.event_name == 'push' || github.event.inputs.run_tests == 'true' }}
       run_migrate: ${{ github.event_name == 'push' || github.event.inputs.run_migrate == 'true' }}
-    secrets:
-      LAGUNA_SSH_HOST: ${{ secrets.LAGUNA_SSH_HOST }}
-      LAGUNA_SSH_USER: ${{ secrets.LAGUNA_SSH_USER }}
-      LAGUNA_SSH_KEY: ${{ secrets.LAGUNA_SSH_KEY }}
-      LAGUNA_APP_PATH: ${{ secrets.LAGUNA_APP_PATH }}
+    secrets: inherit

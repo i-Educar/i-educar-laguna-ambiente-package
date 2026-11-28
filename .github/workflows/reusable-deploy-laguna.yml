@@ -1,10 +1,17 @@
 # Deploy reutilizável → VPS Laguna (Modelópolis).
 # Chamado pelos pacotes da org i-Educar após push em main.
 #
-# Fluxo: testes do módulo → rsync → migrate do pacote → testes no app → tag
+# Segurança:
+#   - Callers devem piná-lo por SHA completo (nunca @main). Ver docs/laguna/deploys/REUSABLE_PIN.
+#   - Actions de terceiros pinadas por SHA.
+#   - Environment GitHub com required reviewers (gate humano).
+#   - contents: read no job; bump/tag só com LAGUNA_DEPLOY_TOKEN (escopo mínimo).
+#   - SSH com known_hosts fixo (sem accept-new / sem ssh-keyscan em runtime).
 #
-# Secrets necessários (org ou repo):
+# Secrets (org ou repo + environment):
 #   LAGUNA_SSH_HOST, LAGUNA_SSH_USER, LAGUNA_SSH_KEY, LAGUNA_APP_PATH
+#   LAGUNA_SSH_KNOWN_HOSTS  — uma ou mais linhas OpenSSH known_hosts (fingerprint esperado)
+#   LAGUNA_DEPLOY_TOKEN     — PAT/App com Contents: Read and write só nos repos dos pacotes
 name: Reusable · Deploy Laguna
 
 on:
@@ -15,10 +22,9 @@ on:
         required: true
         type: string
       server_path:
-        description: Caminho relativo no app (ex. packages/buriti/...)
-        required: false
+        description: Caminho relativo no app (obrigatório — não buscar paths.map em main)
+        required: true
         type: string
-        default: ''
       ref:
         description: SHA/ref a publicar (vazio = commit do caller)
         required: false
@@ -34,53 +40,166 @@ on:
         required: false
         type: boolean
         default: true
+      environment:
+        description: Environment GitHub com proteção (required reviewers)
+        required: false
+        type: string
+        default: laguna-production
     secrets:
+      # Preferir secrets no Environment laguna-production (ou org).
+      # Callers podem usar `secrets: inherit` ou passar explicitamente.
       LAGUNA_SSH_HOST:
-        required: true
+        required: false
       LAGUNA_SSH_USER:
-        required: true
+        required: false
       LAGUNA_SSH_KEY:
-        required: true
+        required: false
       LAGUNA_APP_PATH:
-        required: true
+        required: false
+      LAGUNA_SSH_KNOWN_HOSTS:
+        required: false
+      LAGUNA_DEPLOY_TOKEN:
+        required: false
+
+# Mínimo no workflow; write de git só via LAGUNA_DEPLOY_TOKEN.
+permissions:
+  contents: read
 
 jobs:
   deploy:
     name: Deploy ${{ inputs.package_repo }} → Laguna
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    # Evita loop: bump de versão no próprio workflow committa com [skip ci].
+    if: ${{ github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]') }}
+    permissions:
+      contents: read
     steps:
+      - name: Validar server_path
+        run: |
+          set -euo pipefail
+          REL='${{ inputs.server_path }}'
+          if [ -z "$REL" ]; then
+            echo "::error::server_path é obrigatório (não resolvemos paths.map em @main)."
+            exit 1
+          fi
+          case "$REL" in
+            packages/buriti/*|packages/portabilis/*) ;;
+            *)
+              echo "::error::server_path inválido: $REL (esperado packages/buriti/... ou packages/portabilis/...)"
+              exit 1
+              ;;
+          esac
+          echo "rel=$REL" >> "$GITHUB_OUTPUT"
+        id: path
+
+      - name: Exigir secrets de deploy
+        run: |
+          set -euo pipefail
+          missing=0
+          for v in LAGUNA_SSH_HOST LAGUNA_SSH_USER LAGUNA_SSH_KEY LAGUNA_APP_PATH LAGUNA_SSH_KNOWN_HOSTS LAGUNA_DEPLOY_TOKEN; do
+            # Indireção via env injetado abaixo
+            eval "val=\${$v}"
+            if [ -z "${val}" ]; then
+              echo "::error::Secret $v ausente (grave no Environment laguna-production ou org)."
+              missing=1
+            fi
+          done
+          exit "$missing"
+        env:
+          LAGUNA_SSH_HOST: ${{ secrets.LAGUNA_SSH_HOST }}
+          LAGUNA_SSH_USER: ${{ secrets.LAGUNA_SSH_USER }}
+          LAGUNA_SSH_KEY: ${{ secrets.LAGUNA_SSH_KEY }}
+          LAGUNA_APP_PATH: ${{ secrets.LAGUNA_APP_PATH }}
+          LAGUNA_SSH_KNOWN_HOSTS: ${{ secrets.LAGUNA_SSH_KNOWN_HOSTS }}
+          LAGUNA_DEPLOY_TOKEN: ${{ secrets.LAGUNA_DEPLOY_TOKEN }}
+
       - name: Checkout pacote
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
           path: package
+          # Token de deploy (não GITHUB_TOKEN) — bump/tag com permissions: contents: read.
+          token: ${{ secrets.LAGUNA_DEPLOY_TOKEN }}
+          ref: ${{ inputs.ref != '' && inputs.ref || github.sha }}
 
-      - name: Resolver caminho no servidor
-        id: path
+      - name: Bump de versão do módulo (composer.json)
+        id: version
         working-directory: package
         run: |
           set -euo pipefail
-          REPO="${{ inputs.package_repo }}"
-          EXPLICITO="${{ inputs.server_path }}"
-          if [ -n "$EXPLICITO" ]; then
-            echo "rel=$EXPLICITO" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          curl -fsSL \
-            "https://raw.githubusercontent.com/i-Educar/i-educar-laguna-ambiente-package/main/docs/laguna/deploys/paths.map.json" \
-            -o /tmp/paths.map.json || echo '{}' > /tmp/paths.map.json
-          REL=$(python3 -c 'import json,os; m=json.load(open("/tmp/paths.map.json")); print(m.get(os.environ["REPO"],""))')
-          if [ -z "$REL" ]; then
-            REL="packages/buriti/${REPO}"
-            echo "::warning::Repo $REPO ausente do paths.map.json — usando $REL"
-          fi
-          echo "rel=$REL" >> "$GITHUB_OUTPUT"
+          python3 <<'PY'
+          import json, os, re, pathlib
+          p = pathlib.Path("composer.json")
+          data = json.loads(p.read_text(encoding="utf-8"))
+          raw = str(data.get("version") or "0.0.0").strip()
+          parts = re.split(r"[.\-+]", raw)
+          nums = []
+          for part in parts[:3]:
+              m = re.match(r"(\d+)", part or "0")
+              nums.append(int(m.group(1)) if m else 0)
+          while len(nums) < 3:
+              nums.append(0)
+          nums[2] += 1
+          nova = ".".join(str(n) for n in nums[:3])
+          data["version"] = nova
+          p.write_text(json.dumps(data, indent=4, ensure_ascii=False) + "\n", encoding="utf-8")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              out.write(f"version={nova}\n")
+          print(f"version {raw} → {nova}")
+          PY
+
+      - name: Gerar deploy-info.json + commit versão
+        id: deployinfo
+        working-directory: package
         env:
+          VERSION: ${{ steps.version.outputs.version }}
           REPO: ${{ inputs.package_repo }}
+        run: |
+          set -euo pipefail
+          git config user.name "i-Educar Deploy Bot"
+          git config user.email "deploy-bot@users.noreply.github.com"
+          NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          COMPOSER=$(python3 -c 'import json; print(json.load(open("composer.json")).get("name",""))')
+          export NOW COMPOSER
+          python3 <<'PY'
+          import json, os
+          info = {
+            "package": os.environ["REPO"],
+            "composer": os.environ["COMPOSER"],
+            "version": os.environ["VERSION"],
+            "sha": "pending",
+            "full_sha": "pending",
+            "deployed_at": os.environ["NOW"],
+            "source": "github-actions",
+          }
+          open("deploy-info.json", "w", encoding="utf-8").write(json.dumps(info, indent=2) + "\n")
+          PY
+          git add composer.json deploy-info.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: bump version to ${VERSION} [skip ci]"
+            git push origin HEAD
+          fi
+          SHA=$(git rev-parse --short HEAD)
+          FULL=$(git rev-parse HEAD)
+          python3 <<PY
+          import json
+          info = json.load(open("deploy-info.json", encoding="utf-8"))
+          info["sha"] = """$SHA"""
+          info["full_sha"] = """$FULL"""
+          info["tag"] = ""
+          open("deploy-info.json", "w", encoding="utf-8").write(json.dumps(info, indent=2) + "\n")
+          print(json.dumps(info, indent=2))
+          PY
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "full=$FULL" >> "$GITHUB_OUTPUT"
+          echo "deployed_at=$NOW" >> "$GITHUB_OUTPUT"
+          echo "composer=$COMPOSER" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Setup PHP (testes do módulo)
         if: ${{ inputs.run_tests }}
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # 2.35.5
         with:
           php-version: '8.3'
           coverage: none
@@ -105,27 +224,35 @@ jobs:
           echo "$OUT"
           echo "::endgroup::"
           echo "ran=true" >> "$GITHUB_OUTPUT"
-          # Smoke isolado: útil quando o pacote é autônomo. Se depender do monorepo
-          # (siblings/config), avisa e segue — o gate definitivo é pós-deploy no servidor.
           if [ "$RC" -ne 0 ] || echo "$OUT" | grep -qE '^[[:space:]]*FAIL'; then
             echo "::warning::Smoke CI isolado falhou (exit ${RC}) — gate definitivo nos testes pós-deploy"
           fi
 
-      - name: Preparar SSH
+      - name: Preparar SSH (known_hosts fixo)
+        env:
+          KNOWN_HOSTS: ${{ secrets.LAGUNA_SSH_KNOWN_HOSTS }}
         run: |
           set -euo pipefail
           install -m 700 -d ~/.ssh
           printf '%s\n' "${{ secrets.LAGUNA_SSH_KEY }}" > ~/.ssh/id_laguna
           chmod 600 ~/.ssh/id_laguna
-          ssh-keyscan -H "${{ secrets.LAGUNA_SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
+          # Sem ssh-keyscan / accept-new: só o fingerprint pré-aprovado no secret.
+          if [ -z "${KNOWN_HOSTS//[[:space:]]/}" ]; then
+            echo "::error::LAGUNA_SSH_KNOWN_HOSTS vazio — grave o known_hosts esperado no secret/org ou no Environment."
+            exit 1
+          fi
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
           printf '%s\n' \
             'Host laguna' \
             '  HostName ${{ secrets.LAGUNA_SSH_HOST }}' \
             '  User ${{ secrets.LAGUNA_SSH_USER }}' \
             '  IdentityFile ~/.ssh/id_laguna' \
             '  IdentitiesOnly yes' \
-            '  StrictHostKeyChecking accept-new' > ~/.ssh/config
+            '  StrictHostKeyChecking yes' \
+            '  UserKnownHostsFile ~/.ssh/known_hosts' > ~/.ssh/config
           chmod 600 ~/.ssh/config
+          ssh -o BatchMode=yes -o ConnectTimeout=15 laguna 'echo ok-ssh' >/dev/null
 
       - name: Sync rsync → servidor
         id: sync
@@ -152,9 +279,6 @@ jobs:
           echo "Synced $REL @ $SHA → $DEST"
 
       - name: Pós-deploy (migrate do pacote + testes + artisan)
-        env:
-          RUN_MIGRATE: ${{ inputs.run_migrate }}
-          RUN_TESTS: ${{ inputs.run_tests }}
         run: |
           set -euo pipefail
           APP="${{ secrets.LAGUNA_APP_PATH }}"
@@ -177,7 +301,6 @@ jobs:
           php_bin artisan view:clear || true
           php_bin artisan package:discover --ansi || true
 
-          # —— Migrate só das migrations deste pacote ——
           if [ "\$RUN_MIGRATE" = 'true' ]; then
             MIG_PATH="\${REL}/database/migrations"
             if [ -d "\$MIG_PATH" ] && ls "\$MIG_PATH"/*.php >/dev/null 2>&1; then
@@ -191,7 +314,6 @@ jobs:
             echo "::notice::run_migrate=false — skip migrate"
           fi
 
-          # —— Testes específicos no contexto do app (Laravel disponível) ——
           if [ "\$RUN_TESTS" = 'true' ]; then
             if [ -f "\${REL}/tests/run.php" ]; then
               echo "::group::tests/run.php (servidor)"
@@ -213,7 +335,6 @@ jobs:
               echo "::notice::Sem \${REL}/tests/run.php — skip testes no servidor"
             fi
 
-            # PHPUnit Feature do pacote (se houver e o monorepo tiver phpunit)
             if [ -d "\${REL}/tests/Feature" ] && [ -x vendor/bin/phpunit ]; then
               echo "::group::phpunit Feature"
               set +e
@@ -229,11 +350,74 @@ jobs:
           fi
           EOF
 
+      - name: Registrar manifesto de deploy no servidor
+        env:
+          VERSION: ${{ steps.deployinfo.outputs.version }}
+          SHA: ${{ steps.deployinfo.outputs.sha }}
+          FULL: ${{ steps.deployinfo.outputs.full }}
+          DEPLOYED_AT: ${{ steps.deployinfo.outputs.deployed_at }}
+          COMPOSER: ${{ steps.deployinfo.outputs.composer }}
+          REPO: ${{ inputs.package_repo }}
+          REL: ${{ steps.path.outputs.rel }}
+        run: |
+          set -euo pipefail
+          APP="${{ secrets.LAGUNA_APP_PATH }}"
+          python3 <<'PY'
+          import json, os
+          info = {
+            "package": os.environ["REPO"],
+            "composer": os.environ.get("COMPOSER") or "",
+            "version": os.environ.get("VERSION") or "",
+            "sha": os.environ.get("SHA") or "",
+            "full_sha": os.environ.get("FULL") or "",
+            "deployed_at": os.environ.get("DEPLOYED_AT") or "",
+            "path": os.environ["REL"],
+            "source": "github-actions",
+          }
+          open("/tmp/module-deploy-info.json", "w", encoding="utf-8").write(json.dumps(info, indent=2) + "\n")
+          print(json.dumps(info, indent=2))
+          PY
+          scp /tmp/module-deploy-info.json laguna:/tmp/module-deploy-info.json
+          ssh laguna "bash -s" <<EOF
+          set -euo pipefail
+          APP='$APP'
+          REL='$REL'
+          MANIFEST_DIR="\$APP/storage/app/buriti"
+          INFO="\$APP/\$REL/deploy-info.json"
+          mkdir -p "\$MANIFEST_DIR" "\$(dirname "\$INFO")"
+          cp /tmp/module-deploy-info.json "\$INFO"
+          APP="\$APP" REL="\$REL" python3 - <<'PY'
+          import json, os, pathlib
+          app = pathlib.Path(os.environ["APP"])
+          rel = os.environ["REL"]
+          info = json.loads(pathlib.Path("/tmp/module-deploy-info.json").read_text(encoding="utf-8"))
+          manifest_path = app / "storage/app/buriti/modules-deploy.json"
+          data = {"modules": {}, "updated_at": None}
+          if manifest_path.is_file():
+              try:
+                  data = json.loads(manifest_path.read_text(encoding="utf-8"))
+              except Exception:
+                  pass
+          if not isinstance(data.get("modules"), dict):
+              data["modules"] = {}
+          for key in filter(None, [info.get("composer"), info.get("package"), info.get("path"), pathlib.Path(rel).name]):
+              data["modules"][str(key)] = info
+          data["updated_at"] = info.get("deployed_at")
+          manifest_path.parent.mkdir(parents=True, exist_ok=True)
+          manifest_path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+          print("ok", manifest_path)
+          PY
+          if id www-data >/dev/null 2>&1; then
+            sudo chown -R www-data:www-data "\$MANIFEST_DIR" 2>/dev/null || true
+            sudo chown www-data:www-data "\$INFO" 2>/dev/null || true
+          fi
+          EOF
+
       - name: Tag de deploy no pacote
         id: tag
         working-directory: package
         env:
-          SHA: ${{ steps.sync.outputs.sha }}
+          SHA: ${{ steps.deployinfo.outputs.sha }}
         run: |
           set -euo pipefail
           TAG="deploy/laguna/$(date -u +%Y%m%d-%H%M)-${SHA}"
@@ -244,10 +428,6 @@ jobs:
             echo "tag=$TAG" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          git tag -a "$TAG" -m "Deploy Laguna ${{ inputs.package_repo }} @ ${SHA}" || true
-          if git push origin "$TAG" 2>/tmp/tag-push.err; then
-            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          else
-            echo "::warning::Não foi possível publicar a tag: $(tr '\n' ' ' </tmp/tag-push.err)"
-            echo "tag=" >> "$GITHUB_OUTPUT"
-          fi
+          git tag -a "$TAG" -m "Deploy Laguna ${{ inputs.package_repo }} @ ${SHA}"
+          git push origin "$TAG"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
