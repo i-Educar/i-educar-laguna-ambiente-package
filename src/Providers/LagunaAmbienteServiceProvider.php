@@ -13,6 +13,7 @@ use iEducar\Packages\BuritiLagunaAmbiente\Console\LagunaSetupCommand;
 use iEducar\Packages\BuritiLagunaAmbiente\Console\LagunaModulosDeployReconstruirCommand;
 use iEducar\Packages\BuritiLagunaAmbiente\Console\LagunaSimularPessoasCommand;
 use iEducar\Packages\BuritiLagunaAmbiente\Http\Middleware\ExigeModuloAtivo;
+use iEducar\Packages\BuritiLagunaAmbiente\Http\Middleware\ExigePermissaoModulo;
 use iEducar\Packages\BuritiLagunaAmbiente\Http\Middleware\InjetarPainelModulosDeploy;
 use iEducar\Packages\BuritiLagunaAmbiente\Support\BuritiUi;
 use iEducar\Packages\BuritiLagunaAmbiente\Support\CatalogoModulos;
@@ -113,13 +114,16 @@ class LagunaAmbienteServiceProvider extends ServiceProvider
             'ieducar.checkresetpassword',
         ])->group($root.'/routes/web.php');
 
-        // Bloqueia rotas de módulos desativados (complementa auth/permissão do usuário)
+        // Bloqueia rotas de módulos desativados / sem ACL do perfil
         $router = $this->app['router'];
         $router->aliasMiddleware('modulo.ativo', ExigeModuloAtivo::class);
+        $router->aliasMiddleware('modulo.permissao', ExigePermissaoModulo::class);
         $router->pushMiddlewareToGroup('web', ExigeModuloAtivo::class);
+        $router->pushMiddlewareToGroup('web', ExigePermissaoModulo::class);
         $router->pushMiddlewareToGroup('web', InjetarPainelModulosDeploy::class);
         try {
             $router->pushMiddlewareToGroup('api', ExigeModuloAtivo::class);
+            $router->pushMiddlewareToGroup('api', ExigePermissaoModulo::class);
         } catch (\Throwable) {
             // grupo api pode não existir em alguns boots
         }

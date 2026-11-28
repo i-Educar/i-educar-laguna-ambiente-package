@@ -714,7 +714,7 @@ final class DiretivasModulos
                     'Horário automático / ACT / eventos agregados',
                 ],
                 'bloqueavel' => true,
-                'prefixos_rota' => [],
+                'prefixos_rota' => ['rh-educacional'],
             ],
             'censo' => [
                 'guia' => 'Importação Educacenso. Ative na janela de carga; não exige setor público.',

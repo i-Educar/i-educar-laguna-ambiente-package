@@ -239,6 +239,9 @@ final class PermissaoMatriz
     /**
      * Garante tipos Laguna e reaplica ACL Buriti conforme a matriz.
      *
+     * Operadores (≠ admin) têm menu_tipo_usuario zerado e regravado — remove
+     * poluição legada (ex.: tipo 8 com RH/vagas/matrícula).
+     *
      * @return array{tipos:int,acl:int,revogados:int}
      */
     public static function sincronizar(): array
@@ -263,23 +266,20 @@ final class PermissaoMatriz
             $tipos++;
         }
 
-        // Desativa o antigo “Assistência / rede de proteção” (cod 15 legado) se ainda existir com outro nome.
-        // Cod 15 passou a ser Bibliotecário.
-
-        $governados = self::menusGovernados();
         $revogados = 0;
-        if ($governados !== []) {
-            $revogados = DB::table('pmieducar.menu_tipo_usuario')
-                ->whereIn('menu_id', $governados)
-                ->whereIn('ref_cod_tipo_usuario', array_column(self::perfis(), 'cod'))
-                ->delete();
-        }
-
         $acl = 0;
         foreach (self::perfis() as $p) {
-            $processos = self::processosDoPerfil($p);
-            $acl += self::conceder($processos, [$p['cod']]);
+            $cod = (int) $p['cod'];
+            if ($cod !== self::TIPO_ADMIN) {
+                $revogados += (int) DB::table('pmieducar.menu_tipo_usuario')
+                    ->where('ref_cod_tipo_usuario', $cod)
+                    ->delete();
+            }
+            $acl += self::conceder(self::processosDoPerfil($p), [$cod]);
         }
+
+        // Secretário SME: núcleo legado (Escola, Pessoas, …) fora das faixas Buriti.
+        $acl += self::concederNucleoSecretario();
 
         // Ambiente Laguna + flags: só admin.
         $revogados += self::revogarForaDe(
@@ -291,6 +291,107 @@ final class PermissaoMatriz
         );
 
         return ['tipos' => $tipos, 'acl' => $acl, 'revogados' => $revogados];
+    }
+
+    /**
+     * Concede ao Secretário SME os menus ativos fora da governança Buriti
+     * (Escola, Pessoas, Educacenso, etc.).
+     */
+    public static function concederNucleoSecretario(): int
+    {
+        if (! Schema::hasTable('pmieducar.menu_tipo_usuario') || ! Schema::hasTable('menus')) {
+            return 0;
+        }
+
+        $governados = self::menusGovernados();
+        $menus = DB::table('menus')
+            ->where('active', true)
+            ->whereNotNull('process')
+            ->when($governados !== [], static fn ($q) => $q->whereNotIn('id', $governados))
+            // Configurações / tools ficam só com admin.
+            ->whereNotIn('process', [25, 3000, 999873, 999910])
+            ->pluck('id');
+
+        $n = 0;
+        foreach ($menus as $menuId) {
+            DB::table('pmieducar.menu_tipo_usuario')->updateOrInsert(
+                [
+                    'ref_cod_tipo_usuario' => self::TIPO_SECRETARIO,
+                    'menu_id' => $menuId,
+                ],
+                ['visualiza' => 1, 'cadastra' => 1, 'exclui' => 0],
+            );
+            $n++;
+        }
+
+        return $n;
+    }
+
+    /**
+     * Usuário pode acessar o módulo do catálogo (algum process da faixa/ACL).
+     */
+    public static function usuarioPodeAcessarModulo(mixed $user, string $moduloId): bool
+    {
+        if ($user === null) {
+            return false;
+        }
+        if (method_exists($user, 'isAdmin') && $user->isAdmin()) {
+            return true;
+        }
+        if ((int) ($user->ref_cod_tipo_usuario ?? 0) === self::TIPO_ADMIN) {
+            return true;
+        }
+
+        $moduloId = trim($moduloId);
+        if ($moduloId === '' || in_array($moduloId, ['laguna-ambiente', 'modulos-config'], true)) {
+            return false;
+        }
+
+        $processos = self::faixasModulo()[$moduloId] ?? null;
+        if ($processos === null) {
+            foreach (CatalogoModulos::todos() as $mod) {
+                if ((string) ($mod['id'] ?? '') === $moduloId) {
+                    $processos = array_map('intval', $mod['processos'] ?? []);
+                    break;
+                }
+            }
+        }
+        $processos = array_values(array_filter(
+            array_map('intval', $processos ?? []),
+            static fn (int $p): bool => $p > 0
+        ));
+        if ($processos === []) {
+            return false;
+        }
+
+        try {
+            if (method_exists($user, 'can')) {
+                foreach ($processos as $processo) {
+                    if ($user->can('view', $processo)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            $menuIds = Menu::query()->whereIn('process', $processos)->pluck('id')->all();
+            if ($menuIds === []) {
+                return false;
+            }
+            $tipo = (int) ($user->ref_cod_tipo_usuario ?? 0);
+            if ($tipo <= 0) {
+                return false;
+            }
+
+            return DB::table('pmieducar.menu_tipo_usuario')
+                ->where('ref_cod_tipo_usuario', $tipo)
+                ->whereIn('menu_id', $menuIds)
+                ->where('visualiza', 1)
+                ->exists();
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     /**
