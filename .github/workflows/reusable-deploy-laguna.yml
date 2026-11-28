@@ -41,13 +41,8 @@ on:
         required: true
       LAGUNA_APP_PATH:
         required: true
-      IEDUCAR_DEPLOY_TOKEN:
-        required: false
 
-permissions:
-  contents: write
-  deployments: write
-  actions: read
+# permissions herdadas do caller (contents: write)
 
 jobs:
   deploy:
