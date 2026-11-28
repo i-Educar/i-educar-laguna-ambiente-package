@@ -8,10 +8,14 @@ on:
       - 'docs/laguna/deploys/REGISTRY.jsonl'
   workflow_dispatch:
     inputs:
-      run_migrate:
-        description: Rodar migrate --force no servidor
+      run_tests:
+        description: Rodar testes específicos do módulo (tests/run.php + Feature)
         type: boolean
-        default: false
+        default: true
+      run_migrate:
+        description: Rodar migrate --path das migrations deste pacote
+        type: boolean
+        default: true
 
 concurrency:
   group: deploy-laguna-${{ github.repository }}
@@ -26,7 +30,8 @@ jobs:
     with:
       package_repo: i-educar-laguna-ambiente-package
       server_path: packages/buriti/i-educar-laguna-ambiente-package
-      run_migrate: ${{ github.event.inputs.run_migrate == 'true' }}
+      run_tests: ${{ github.event_name == 'push' || github.event.inputs.run_tests == 'true' }}
+      run_migrate: ${{ github.event_name == 'push' || github.event.inputs.run_migrate == 'true' }}
     secrets:
       LAGUNA_SSH_HOST: ${{ secrets.LAGUNA_SSH_HOST }}
       LAGUNA_SSH_USER: ${{ secrets.LAGUNA_SSH_USER }}

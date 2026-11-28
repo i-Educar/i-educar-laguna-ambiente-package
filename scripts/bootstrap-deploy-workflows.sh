@@ -51,7 +51,12 @@ for repo, rel in sorted(mapping.items()):
         print(f"  (sem mudanças)")
         continue
     subprocess.run(
-        ["git", "commit", "-m", "ci: deploy automático Laguna (GitHub Actions)"],
+        [
+            "git",
+            "commit",
+            "-m",
+            "ci: testes e migrate do módulo no Deploy Laguna",
+        ],
         cwd=local,
         check=True,
     )

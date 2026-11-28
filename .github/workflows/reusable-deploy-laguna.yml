@@ -1,13 +1,10 @@
 # Deploy reutilizável → VPS Laguna (Modelópolis).
 # Chamado pelos pacotes da org i-Educar após push em main.
 #
-# Secrets necessários (org ou repo, via secrets: inherit):
-#   LAGUNA_SSH_HOST   — ex.: 177.39.18.192
-#   LAGUNA_SSH_USER   — ex.: debian
-#   LAGUNA_SSH_KEY    — chave privada OpenSSH (ed25519/rsa)
-#   LAGUNA_APP_PATH   — ex.: /var/www/ieducar
-#   IEDUCAR_DEPLOY_TOKEN (opcional) — PAT com contents:write no laguna-ambiente
-#                                     para registrar o deploy no REGISTRY.jsonl
+# Fluxo: testes do módulo → rsync → migrate do pacote → testes no app → tag
+#
+# Secrets necessários (org ou repo):
+#   LAGUNA_SSH_HOST, LAGUNA_SSH_USER, LAGUNA_SSH_KEY, LAGUNA_APP_PATH
 name: Reusable · Deploy Laguna
 
 on:
@@ -27,11 +24,16 @@ on:
         required: false
         type: string
         default: ''
-      run_migrate:
-        description: Rodar php artisan migrate --force após o sync
+      run_tests:
+        description: Rodar tests/run.php (CI + pós-deploy no servidor)
         required: false
         type: boolean
-        default: false
+        default: true
+      run_migrate:
+        description: Rodar migrate --path do pacote no servidor
+        required: false
+        type: boolean
+        default: true
     secrets:
       LAGUNA_SSH_HOST:
         required: true
@@ -41,8 +43,6 @@ on:
         required: true
       LAGUNA_APP_PATH:
         required: true
-
-# permissions herdadas do caller (contents: write)
 
 jobs:
   deploy:
@@ -66,19 +66,41 @@ jobs:
             echo "rel=$EXPLICITO" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          # Baixa o mapa canônico do hub (ambiente)
           curl -fsSL \
             "https://raw.githubusercontent.com/i-Educar/i-educar-laguna-ambiente-package/main/docs/laguna/deploys/paths.map.json" \
             -o /tmp/paths.map.json || echo '{}' > /tmp/paths.map.json
           REL=$(python3 -c 'import json,os; m=json.load(open("/tmp/paths.map.json")); print(m.get(os.environ["REPO"],""))')
           if [ -z "$REL" ]; then
-            # fallback: packages/buriti/<repo> (transporte tem nome de pasta diferente)
             REL="packages/buriti/${REPO}"
             echo "::warning::Repo $REPO ausente do paths.map.json — usando $REL"
           fi
           echo "rel=$REL" >> "$GITHUB_OUTPUT"
         env:
           REPO: ${{ inputs.package_repo }}
+
+      - name: Setup PHP (testes do módulo)
+        if: ${{ inputs.run_tests }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: none
+
+      - name: Testes específicos do módulo (CI)
+        if: ${{ inputs.run_tests }}
+        id: tests_ci
+        working-directory: package
+        run: |
+          set -euo pipefail
+          if [ ! -f tests/run.php ]; then
+            echo "::notice::Sem tests/run.php — skip testes CI"
+            echo "ran=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "::group::php tests/run.php"
+          php tests/run.php
+          echo "::endgroup::"
+          echo "ran=true" >> "$GITHUB_OUTPUT"
 
       - name: Preparar SSH
         run: |
@@ -120,21 +142,81 @@ jobs:
             package/ "laguna:${DEST}/" || { rc=$?; [ "$rc" -eq 23 ] || exit "$rc"; }
           echo "Synced $REL @ $SHA → $DEST"
 
-      - name: Pós-deploy (artisan)
+      - name: Pós-deploy (migrate do pacote + testes + artisan)
+        env:
+          RUN_MIGRATE: ${{ inputs.run_migrate }}
+          RUN_TESTS: ${{ inputs.run_tests }}
         run: |
           set -euo pipefail
           APP="${{ secrets.LAGUNA_APP_PATH }}"
+          REL="${{ steps.path.outputs.rel }}"
           ssh laguna "bash -s" <<EOF
           set -euo pipefail
           cd '$APP'
-          if id www-data >/dev/null 2>&1; then
-            sudo -u www-data php artisan view:clear || true
-            sudo -u www-data php artisan package:discover --ansi || true
-            if [ '${{ inputs.run_migrate }}' = 'true' ]; then
-              sudo -u www-data php artisan migrate --force --no-interaction || true
+          REL='$REL'
+          RUN_MIGRATE='${{ inputs.run_migrate }}'
+          RUN_TESTS='${{ inputs.run_tests }}'
+
+          php_bin() {
+            if id www-data >/dev/null 2>&1; then
+              sudo -u www-data php "\$@"
+            else
+              php "\$@"
+            fi
+          }
+
+          php_bin artisan view:clear || true
+          php_bin artisan package:discover --ansi || true
+
+          # —— Migrate só das migrations deste pacote ——
+          if [ "\$RUN_MIGRATE" = 'true' ]; then
+            MIG_PATH="\${REL}/database/migrations"
+            if [ -d "\$MIG_PATH" ] && ls "\$MIG_PATH"/*.php >/dev/null 2>&1; then
+              echo "::group::migrate --path=\$MIG_PATH"
+              php_bin artisan migrate --force --no-interaction --path="\$MIG_PATH"
+              echo "::endgroup::"
+            else
+              echo "::notice::Sem migrations em \$MIG_PATH — skip migrate"
             fi
           else
-            php artisan view:clear || true
+            echo "::notice::run_migrate=false — skip migrate"
+          fi
+
+          # —— Testes específicos no contexto do app (Laravel disponível) ——
+          if [ "\$RUN_TESTS" = 'true' ]; then
+            if [ -f "\${REL}/tests/run.php" ]; then
+              echo "::group::tests/run.php (servidor)"
+              set +e
+              OUT=\$(php_bin "\${REL}/tests/run.php" 2>&1)
+              RC=\$?
+              set -e
+              echo "\$OUT"
+              echo "::endgroup::"
+              if [ "\$RC" -ne 0 ]; then
+                echo "::error::tests/run.php falhou (exit \$RC)"
+                exit "\$RC"
+              fi
+              if echo "\$OUT" | grep -qE '^[[:space:]]*FAIL'; then
+                echo "::error::tests/run.php reportou FAIL"
+                exit 1
+              fi
+            else
+              echo "::notice::Sem \${REL}/tests/run.php — skip testes no servidor"
+            fi
+
+            # PHPUnit Feature do pacote (se houver e o monorepo tiver phpunit)
+            if [ -d "\${REL}/tests/Feature" ] && [ -x vendor/bin/phpunit ]; then
+              echo "::group::phpunit Feature"
+              set +e
+              vendor/bin/phpunit --colors=always "\${REL}/tests/Feature"
+              PRC=\$?
+              set -e
+              echo "::endgroup::"
+              if [ "\$PRC" -ne 0 ]; then
+                echo "::error::phpunit Feature falhou (exit \$PRC)"
+                exit "\$PRC"
+              fi
+            fi
           fi
           EOF
 
