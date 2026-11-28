@@ -30,6 +30,10 @@ final class PermissaoMatriz
 
     public const int TIPO_SECRETARIO = 2;
 
+    public const int TIPO_DIRETOR = 3;
+
+    public const int TIPO_COORDENADOR = 4;
+
     /** Espelha LegacyUserType::LEVEL_* sem acoplar o smoke test ao app. */
     private const int NIVEL_ADMIN = 1;
 
@@ -328,6 +332,8 @@ final class PermissaoMatriz
 
         // Secretário SME: núcleo legado (Escola, Pessoas, …) fora das faixas Buriti.
         $acl += self::concederNucleoSecretario();
+        // Diretor / coordenador: Escola + Pessoas (sem Configurações / Ambiente).
+        $acl += self::concederNucleoUnidade();
 
         // Ambiente Laguna + flags: só admin.
         $revogados += self::revogarForaDe(
@@ -374,6 +380,86 @@ final class PermissaoMatriz
         }
 
         return $n;
+    }
+
+    /**
+     * Núcleo da unidade: Escola + Pessoas para diretor e coordenador pedagógico.
+     * (Atendimento/relatórios Buriti são filhos de Escola — sem ACL do process 55
+     * o card aparece no painel e a intranet bloqueia.)
+     */
+    public static function concederNucleoUnidade(): int
+    {
+        if (! Schema::hasTable('pmieducar.menu_tipo_usuario') || ! Schema::hasTable('menus')) {
+            return 0;
+        }
+
+        $raizes = DB::table('menus')
+            ->whereIn('process', [7, 55]) // Pessoas, Escola
+            ->pluck('id')
+            ->map(static fn ($id): int => (int) $id)
+            ->all();
+        if ($raizes === []) {
+            return 0;
+        }
+
+        $ids = self::idsComDescendentes($raizes);
+        $governados = array_fill_keys(self::menusGovernados(), true);
+        $menus = DB::table('menus')
+            ->whereIn('id', $ids)
+            ->where('active', true)
+            ->whereNotNull('process')
+            ->whereNotIn('process', [25, 3000, 999873, 999910])
+            ->whereNotBetween('process', [880100, 884199])
+            ->get(['id', 'process']);
+
+        $tipos = [self::TIPO_DIRETOR, self::TIPO_COORDENADOR];
+        $n = 0;
+        foreach ($tipos as $codTipo) {
+            $nivel = (int) (DB::table('pmieducar.tipo_usuario')->where('cod_tipo_usuario', $codTipo)->value('nivel') ?? self::NIVEL_INSTITUCIONAL);
+            $acl = self::paraNivel($nivel, $codTipo);
+            foreach ($menus as $menu) {
+                if (isset($governados[(int) $menu->id])) {
+                    continue;
+                }
+                DB::table('pmieducar.menu_tipo_usuario')->updateOrInsert(
+                    [
+                        'ref_cod_tipo_usuario' => $codTipo,
+                        'menu_id' => (int) $menu->id,
+                    ],
+                    $acl,
+                );
+                $n++;
+            }
+        }
+
+        return $n;
+    }
+
+    /**
+     * @param  list<int>  $raizes
+     * @return list<int>
+     */
+    private static function idsComDescendentes(array $raizes): array
+    {
+        $seen = array_fill_keys(array_map('intval', $raizes), true);
+        $pending = array_map('intval', $raizes);
+        while ($pending !== []) {
+            $filhos = DB::table('menus')
+                ->whereIn('parent_id', $pending)
+                ->pluck('id')
+                ->map(static fn ($id): int => (int) $id)
+                ->all();
+            $pending = [];
+            foreach ($filhos as $id) {
+                if (isset($seen[$id])) {
+                    continue;
+                }
+                $seen[$id] = true;
+                $pending[] = $id;
+            }
+        }
+
+        return array_map('intval', array_keys($seen));
     }
 
     /**

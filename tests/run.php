@@ -60,6 +60,8 @@ $assert(in_array('almoxarifado', $modsAlmox, true), 'almox mantém módulo orige
 $deps = PermissaoMatriz::dependenciasModulos();
 $assert(($deps['biblioteca'][0] ?? '') === 'exportacao', 'biblioteca depende de exportação');
 $assert(($deps['alimentacao'][0] ?? '') === 'exportacao', 'alimentação depende de exportação');
+$assert(PermissaoMatriz::TIPO_DIRETOR === 3, 'constante diretor = 3');
+$assert(PermissaoMatriz::TIPO_COORDENADOR === 4, 'constante coordenador = 4');
 
 /* —— Skins / TemaBuriti —— */
 $skins = TemaBuriti::catalogo();
