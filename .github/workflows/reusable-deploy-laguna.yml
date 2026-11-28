@@ -178,7 +178,8 @@ jobs:
           git add composer.json deploy-info.json
           if ! git diff --cached --quiet; then
             git commit -m "chore: bump version to ${VERSION} [skip ci]"
-            git push origin HEAD
+            # Checkout por SHA deixa detached HEAD — precisa refspec completo.
+            git push origin "HEAD:refs/heads/${GITHUB_REF_NAME}"
           fi
           SHA=$(git rev-parse --short HEAD)
           FULL=$(git rev-parse HEAD)
