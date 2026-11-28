@@ -1,11 +1,4 @@
 # Pin imutável do reusable Deploy Laguna.
 # Callers NÃO devem usar @main — só SHA completo (40 hex).
-#
-# Depois do merge/push deste hub com o reusable endurecido:
-#   1. SHA=$(git rev-parse HEAD)   # neste repositório
-#   2. Coloque o SHA abaixo
-#   3. PIN=$SHA bash scripts/pin-reusable-callers.sh
-#   4. Commit+push em cada pacote caller (ou deixe o script com COMMIT=1 PUSH=1)
-#
-# Nunca force-move tags de pin. Para atualizar o reusable: novo SHA + PR nos callers.
-sha=PENDING_SET_AFTER_HUB_PUSH
+# Atualizado após push do hub.
+sha=8508cb00f4e4584b976a94f7dfa7d0b245db6984
