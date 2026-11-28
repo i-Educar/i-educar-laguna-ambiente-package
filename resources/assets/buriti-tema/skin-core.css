@@ -92,10 +92,19 @@ body.tema-buriti-skin .ieducar-header-links {
 body.tema-buriti-skin .ieducar-header-links .dropdown,
 body.tema-buriti-skin .ieducar-header-links .avatar,
 body.tema-buriti-skin .ieducar-header-links .notifications,
-body.tema-buriti-skin .ieducar-header-links .header-sair {
-  float: none;
-  margin: 0;
+body.tema-buriti-skin .ieducar-header-links .header-sair,
+body.tema-buriti-skin .ieducar-header-links .dropdown.notifications,
+body.tema-buriti-skin .ieducar-header-links .dropdown.user-account {
+  float: none !important;
+  margin: 0 !important;
   position: relative;
+}
+
+body.tema-buriti-skin .ieducar-header-links .notifications img {
+  position: static;
+  top: auto;
+  width: 18px;
+  height: 18px;
 }
 
 body.tema-buriti-skin .ieducar-header-links .header-sair {
@@ -879,4 +888,107 @@ body:not(.tema-buriti-laguna) .ieducar-header-links .buriti-modo-toggle-core {
 }
 body:not(.tema-buriti-laguna) .ieducar-header-links .header-sair {
   color: #fff;
+}
+
+/*
+ * Mobile / tablet — evita float legado (base.css) e texto sobre ícones
+ * no cabeçalho do i-Educar.
+ */
+@media (max-width: 960px) {
+  body.tema-buriti-skin .ieducar-header,
+  body.tema-buriti-laguna .ieducar-header {
+    padding: 0 10px 0 12px;
+    gap: 8px;
+    min-height: 52px;
+    height: auto;
+  }
+
+  body.tema-buriti-skin .ieducar-header-logo h1 a {
+    font-size: 0.95rem;
+  }
+
+  body.tema-buriti-skin .ieducar-header-links,
+  body.tema-buriti-laguna .ieducar-header-links,
+  .ieducar-header-links {
+    display: inline-flex !important;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 2px;
+    float: none !important;
+  }
+
+  body.tema-buriti-skin .ieducar-header-links .dropdown,
+  body.tema-buriti-skin .ieducar-header-links .avatar,
+  body.tema-buriti-skin .ieducar-header-links .notifications,
+  body.tema-buriti-skin .ieducar-header-links .header-sair,
+  .ieducar-header-links .dropdown,
+  .ieducar-header-links .notifications,
+  .ieducar-header-links .avatar {
+    float: none !important;
+    margin: 0 !important;
+    position: relative;
+  }
+
+  .ieducar-header-links .notifications img {
+    position: static !important;
+    top: auto !important;
+    width: 18px;
+    height: 18px;
+  }
+
+  body.tema-buriti-skin .ieducar-header-links .dropbtn,
+  .ieducar-header-links .dropbtn {
+    min-height: 34px;
+    padding: 4px 8px !important;
+    background-image: none !important;
+    font-size: 0 !important;
+    line-height: 0;
+  }
+
+  body.tema-buriti-skin .ieducar-header-links .user-dropbtn,
+  .ieducar-header-links .user-dropbtn {
+    padding: 2px !important;
+    gap: 0;
+  }
+
+  body.tema-buriti-skin .ieducar-header-links .user-dropbtn .user-drop-name,
+  .ieducar-header-links .user-dropbtn .user-drop-name {
+    display: none !important;
+  }
+
+  body.tema-buriti-skin .ieducar-header-links .dropbtn.notifications,
+  .ieducar-header-links .dropbtn.notifications {
+    width: 34px;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  body.tema-buriti-skin .ieducar-header-logo .ieducar-sistema-icone,
+  .ieducar-header-logo .ieducar-sistema-icone {
+    width: 32px;
+    height: 32px;
+  }
+
+  body.tema-buriti-skin .ieducar-header-logo .ieducar-sistema-icone img,
+  .ieducar-header-logo .ieducar-sistema-icone img {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+@media (max-width: 640px) {
+  body.tema-buriti-skin .ieducar-header,
+  body.tema-buriti-laguna .ieducar-header {
+    padding: 0 8px;
+  }
+
+  /* Breadcrumb / título logo abaixo do topo — menos colisão visual */
+  body.tema-buriti-skin #corpo,
+  body.tema-buriti-skin .ieducar-content,
+  body.tema-buriti-skin td.r3c2 {
+    padding-top: 4px;
+  }
 }

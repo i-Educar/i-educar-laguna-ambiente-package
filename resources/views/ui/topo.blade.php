@@ -184,8 +184,51 @@
     var BRASAO_URL = @json($brasaoUrl);
     var IEDUCAR_MARCA_URL = @json($ieducarMarcaUrl);
     var IEDUCAR_MARCA_FALLBACK = @json($ieducarMarcaFallback);
+    var MQ_MOBILE = window.matchMedia ? window.matchMedia('(max-width: 860px)') : null;
+    function ehMobileLateral() {
+        return MQ_MOBILE ? MQ_MOBILE.matches : (window.innerWidth <= 860);
+    }
     function lateralEl() {
         return document.querySelector('aside.lateral, .app > .lateral, [data-buriti-lateral]');
+    }
+    function garantirBackdropLateral() {
+        var el = document.querySelector('[data-buriti-lateral-backdrop]');
+        if (el) return el;
+        el = document.createElement('button');
+        el.type = 'button';
+        el.className = 'buriti-lateral-backdrop';
+        el.setAttribute('data-buriti-lateral-backdrop', '1');
+        el.setAttribute('aria-label', 'Fechar menu');
+        el.addEventListener('click', function () { aplicarLateralAberta(false); });
+        document.body.appendChild(el);
+        return el;
+    }
+    function aplicarLateralAberta(on) {
+        on = !!on;
+        document.documentElement.classList.toggle('buriti-lateral-aberta', on);
+        document.body.classList.toggle('buriti-lateral-aberta', on);
+        var app = document.querySelector('.app');
+        if (app) app.classList.toggle('buriti-lateral-aberta', on);
+        garantirBackdropLateral();
+        document.querySelectorAll('.topo-buriti [data-buriti-lateral-toggle]').forEach(function (btn) {
+            btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+            btn.title = on ? 'Fechar menu' : 'Abrir menu';
+            btn.setAttribute('aria-label', btn.title);
+            var ico = btn.querySelector('[data-buriti-lateral-icone]') || btn.querySelector('i');
+            if (ico) ico.className = on ? 'fa fa-times' : 'fa fa-bars';
+        });
+        if (on) {
+            var lat = lateralEl();
+            if (lat) {
+                lat.classList.remove('is-icones');
+                document.documentElement.classList.remove('buriti-lateral-icones');
+                document.body.classList.remove('buriti-lateral-icones');
+                if (app) app.classList.remove('buriti-lateral-icones');
+            }
+        }
+    }
+    function lateralAbertaAtiva() {
+        return document.body.classList.contains('buriti-lateral-aberta');
     }
     function garantirMarcaOrgNaLateral() {
         var lat = lateralEl();
@@ -260,18 +303,47 @@
         return document.body.classList.contains('buriti-lateral-icones');
     }
     garantirMarcaOrgNaLateral();
+    garantirBackdropLateral();
     try {
-        if (localStorage.getItem(KEY_LATERAL) === '1') aplicarLateralIcones(true);
+        if (!ehMobileLateral() && localStorage.getItem(KEY_LATERAL) === '1') aplicarLateralIcones(true);
         else aplicarLateralIcones(false);
     } catch (e) {
         aplicarLateralIcones(false);
     }
+    aplicarLateralAberta(false);
     document.addEventListener('click', function (e) {
         var tgl = e.target && e.target.closest && e.target.closest('[data-buriti-lateral-toggle]');
         if (!tgl) return;
         e.preventDefault();
         e.stopPropagation();
+        if (ehMobileLateral()) {
+            aplicarLateralAberta(!lateralAbertaAtiva());
+            return;
+        }
         aplicarLateralIcones(!lateralIconesAtivo());
+    });
+    if (MQ_MOBILE && MQ_MOBILE.addEventListener) {
+        MQ_MOBILE.addEventListener('change', function () {
+            aplicarLateralAberta(false);
+            if (ehMobileLateral()) {
+                aplicarLateralIcones(false);
+            } else {
+                try {
+                    aplicarLateralIcones(localStorage.getItem(KEY_LATERAL) === '1');
+                } catch (err) {
+                    aplicarLateralIcones(false);
+                }
+            }
+        });
+    }
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && lateralAbertaAtiva()) aplicarLateralAberta(false);
+    });
+    /* Fecha gaveta ao tocar um link do menu no mobile */
+    document.addEventListener('click', function (e) {
+        if (!ehMobileLateral() || !lateralAbertaAtiva()) return;
+        var link = e.target && e.target.closest && e.target.closest('.lateral a, .lateral .modulo a');
+        if (link) aplicarLateralAberta(false);
     });
 
     function fecharTodos(exceto) {

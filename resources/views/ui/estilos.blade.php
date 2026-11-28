@@ -427,30 +427,132 @@
         .cabeca-tela {
             flex-wrap: wrap;
             align-items: flex-start !important;
+            gap: 10px !important;
         }
-        .acoes-tela { width: 100%; justify-content: flex-start; }
+        .acoes-tela {
+            width: 100%;
+            justify-content: flex-start;
+            flex-wrap: nowrap !important;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 2px;
+            scrollbar-width: thin;
+        }
     }
     @media (max-width: 860px) {
-        .app .lateral { display: none !important; }
-        .miolo > main { padding: 14px 14px 22px !important; }
+        /* Lateral vira gaveta; sanduíche abre/fecha */
+        .app .lateral {
+            display: flex !important;
+            flex-direction: column;
+            position: fixed !important;
+            top: 0; left: 0; bottom: 0;
+            z-index: 60;
+            width: min(280px, 88vw) !important;
+            max-width: 280px;
+            transform: translateX(-105%);
+            transition: transform .22s ease;
+            box-shadow: 8px 0 28px rgba(14, 42, 58, .18);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        html.buriti-lateral-aberta .app .lateral,
+        body.buriti-lateral-aberta .app .lateral,
+        .app.buriti-lateral-aberta .lateral {
+            transform: translateX(0);
+        }
+        .buriti-lateral-backdrop {
+            display: none;
+            position: fixed; inset: 0; z-index: 55;
+            background: rgba(14, 42, 58, .42);
+            border: 0; padding: 0; cursor: pointer;
+        }
+        html.buriti-lateral-aberta .buriti-lateral-backdrop,
+        body.buriti-lateral-aberta .buriti-lateral-backdrop {
+            display: block;
+        }
+        .miolo > main { padding: 12px 12px 20px !important; }
+        .topo.topo-buriti, .topo-buriti {
+            grid-template-columns: auto minmax(0, 1fr) auto !important;
+            gap: 6px 8px;
+            padding: 8px 10px;
+            min-height: 52px;
+        }
+        .topo-esq, .topo-dir { gap: 4px; }
+        .topo-centro {
+            min-width: 0;
+            padding: 0 4px;
+            overflow: hidden;
+        }
+        .topo-desc-modulo { display: none !important; }
+        .topo-nome-modulo {
+            font-size: .78rem !important;
+            letter-spacing: .04em;
+            max-width: 100%;
+        }
         .cabeca-tela {
-            margin-left: -14px !important;
-            margin-right: -14px !important;
-            padding: 12px 14px !important;
+            margin-left: -12px !important;
+            margin-right: -12px !important;
+            margin-top: -12px !important;
+            padding: 10px 12px !important;
             flex-direction: column;
             align-items: stretch !important;
+            gap: 8px !important;
         }
+        .cabeca-tela .marca-tela,
+        .identidade-tela .marca-tela { display: none !important; }
+        .cabeca-tela .lead { display: none !important; }
+        .cabeca-tela .titulo-modulo { font-size: .65rem; margin-bottom: 0; }
+        .cabeca-tela h1,
+        .identidade-tela h1 { font-size: 1.05rem !important; line-height: 1.25; }
+        .cabeca-tela .acoes-tela { margin-left: 0 !important; }
         .numeros, .atalhos, .card-grid, .kpis, .mod-cards {
             grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
         }
         .form-grid { grid-template-columns: 1fr !important; }
         .grade { grid-template-columns: 56px repeat(5, minmax(64px, 1fr)) !important; overflow-x: auto; }
+        footer.rodape-coop-buriti {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+            padding: 10px 12px 14px;
+            font-size: .68rem;
+        }
     }
     @media (max-width: 640px) {
-        .topo.topo-buriti { padding: 8px 12px; gap: 8px; grid-template-columns: auto 1fr auto; }
-        .topo-nome-modulo { font-size: .9rem; max-width: 46vw; }
-        .topo-desc-modulo { font-size: .7rem; max-width: 46vw; }
-        .acao-topo-buriti { width: 36px; height: 36px; border-radius: 10px; }
+        .topo.topo-buriti, .topo-buriti {
+            padding: 6px 8px;
+            gap: 4px 6px;
+            min-height: 48px;
+        }
+        .topo-esq .acao-topo-buriti[href*="idiario"],
+        .topo-esq .acao-topo-buriti[title="i-Diário"] { display: none; }
+        .topo-nome-modulo { font-size: .72rem !important; max-width: 38vw; }
+        .acao-topo-buriti {
+            width: 34px; height: 34px; border-radius: 9px; font-size: 14px;
+        }
+        .acao-topo-buriti.user-foto-btn { min-width: 34px; padding: 0 2px; }
+        .acao-topo-buriti .avatar-topo { width: 24px; height: 24px; border-radius: 7px; }
+        .cabeca-tela h1, .identidade-tela h1 { font-size: .98rem !important; }
+        .botao.icone,
+        .acoes-tela > .botao,
+        .acoes-tela > form > .botao,
+        .acoes-tela > form > button.botao,
+        .acoes-tela > .botao.informes,
+        .acoes-tela > .botao.ajuda {
+            width: 36px; min-width: 36px; height: 36px; min-height: 36px;
+        }
+        /* Esconde texto residual dentro de botões de ação (só ícone) */
+        .acoes-tela > .botao,
+        .acoes-tela > form > .botao {
+            font-size: 0 !important;
+            gap: 0 !important;
+            padding: 0 !important;
+        }
+        .acoes-tela > .botao > i,
+        .acoes-tela > form > .botao > i {
+            font-size: 1rem !important;
+            line-height: 1;
+        }
         .bloco, .cartao, .card { padding: 12px !important; }
         .botao, button.botao { min-height: 40px; }
         .numeros, .atalhos, .card-grid {
@@ -755,8 +857,8 @@
 
     /* Analogias de botão comuns a todos os módulos */
     .botao.primaria,
-    .buriti-trilho .botao:not(.claro):not(.suave):not(.perigo):not(.consulta):not(.informes),
-    .acoes-tela .botao:not(.claro):not(.suave):not(.perigo):not(.consulta):not(.informes) {
+    .buriti-trilho .botao:not(.claro):not(.suave):not(.perigo):not(.consulta):not(.informes):not(.ajuda),
+    .acoes-tela .botao:not(.claro):not(.suave):not(.perigo):not(.consulta):not(.informes):not(.ajuda) {
         order: 1;
     }
     .botao.consulta { order: 2; background: var(--superficie, #fff); color: var(--cor-tela, var(--cor)); border: 1px solid color-mix(in srgb, var(--cor-tela, var(--cor)) 28%, var(--linha)); }
@@ -778,15 +880,32 @@
         width: 40px; min-width: 40px; height: 40px; min-height: 40px;
         padding: 0; gap: 0; justify-content: center; flex: none;
         white-space: nowrap;
+        /* Isola de .marca .icone / .icone legado nos layouts de módulo */
+        box-shadow: none;
+        border-radius: 10px;
+    }
+    .botao.icone:not(.claro):not(.informes):not(.ajuda):not(.perigo),
+    .acoes-tela > .botao:not(.claro):not(.informes):not(.ajuda):not(.perigo),
+    .acoes-tela > form > .botao:not(.claro):not(.informes):not(.ajuda):not(.perigo) {
+        background: var(--cor-tela, var(--cor, #0f4c5c));
+        color: #fff;
+    }
+    .botao.claro.icone,
+    .acoes-tela > .botao.claro,
+    .acoes-tela > form > .botao.claro {
+        background: var(--superficie, #fff);
+        color: var(--cor-tela, var(--cor, #0f4c5c));
+        border: 1px solid color-mix(in srgb, var(--cor-tela, var(--cor)) 35%, var(--linha, #cfd8df));
     }
     .botao.icone i,
     .acoes-tela > .botao > i,
     .acoes-tela > form > .botao > i {
         font-size: 1.05rem; line-height: 1; margin: 0;
     }
-    /* Informes: só ícone + cor de informação (azul), sem texto */
-    .botao.informes {
-        order: 8;
+    /* Informes (I) penúltimo; Ajuda (?) sempre o último no cabeçalho */
+    .botao.informes,
+    .acoes-tela > .botao.informes {
+        order: 98;
         width: 40px; min-width: 40px; height: 40px; min-height: 40px;
         padding: 0; gap: 0; justify-content: center;
         border-radius: 10px; border: 0;
@@ -795,9 +914,9 @@
     }
     .botao.informes:hover { filter: brightness(1.06); background: #185fc0; }
     .botao.informes i { font-size: 1.05rem; line-height: 1; margin: 0; }
-    /* Ajuda (?): placeholder — função depois */
-    .botao.ajuda {
-        order: 9;
+    .botao.ajuda,
+    .acoes-tela > .botao.ajuda {
+        order: 99;
         width: 40px; min-width: 40px; height: 40px; min-height: 40px;
         padding: 0; gap: 0; justify-content: center;
         border-radius: 10px;
@@ -824,7 +943,7 @@
     .icone-semaforo i:nth-child(2) { background: #6b7280; }
     .icone-semaforo i:nth-child(3) { background: #4b5563; }
     .botao.perigo {
-        order: 9; background: var(--erro, #9b2c2c); color: #fff; border: 0;
+        order: 7; background: var(--erro, #9b2c2c); color: #fff; border: 0;
     }
     .botao.perigo.claro {
         background: var(--superficie, #fff); color: var(--erro, #9b2c2c);

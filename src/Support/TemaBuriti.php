@@ -245,10 +245,20 @@ final class TemaBuriti
             return [];
         }
 
+        $v = '10';
+        $temaDir = public_path('vendor/buriti-tema');
+        foreach (['skin-core.css'] as $arquivo) {
+            $caminho = $temaDir.DIRECTORY_SEPARATOR.$arquivo;
+            if (is_file($caminho)) {
+                $v = (string) filemtime($caminho);
+                break;
+            }
+        }
+
         return [
-            '/vendor/buriti-tema/tokens.css',
-            '/vendor/buriti-tema/skins-palettes.css',
-            '/vendor/buriti-tema/skin-core.css',
+            '/vendor/buriti-tema/tokens.css?v='.$v,
+            '/vendor/buriti-tema/skins-palettes.css?v='.$v,
+            '/vendor/buriti-tema/skin-core.css?v='.$v,
         ];
     }
 
