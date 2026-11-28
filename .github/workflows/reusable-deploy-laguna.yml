@@ -115,13 +115,14 @@ jobs:
           echo "dest=$DEST" >> "$GITHUB_OUTPUT"
           ssh laguna "mkdir -p '$DEST'"
           rsync -az --delete \
+            --no-perms --no-owner --no-group --omit-dir-times \
             --exclude '.git/' \
             --exclude 'vendor/' \
             --exclude 'node_modules/' \
             --exclude '.env' \
             --exclude 'storage/' \
             --exclude 'tmp/' \
-            package/ "laguna:${DEST}/"
+            package/ "laguna:${DEST}/" || { rc=$?; [ "$rc" -eq 23 ] || exit "$rc"; }
           echo "Synced $REL @ $SHA → $DEST"
 
       - name: Pós-deploy (artisan)
