@@ -64,7 +64,7 @@ final class PermissaoMatriz
                 'nivel' => self::NIVEL_INSTITUCIONAL,
                 'desc' => 'Operação da rede municipal — sem Ambiente Laguna / setup / flags de módulos',
                 'modulos' => '*',
-                'excluir_modulos' => ['laguna-ambiente', 'modulos-config'],
+                'excluir_modulos' => ['laguna-ambiente', 'modulos-config', 'papeis-temporarios'],
             ],
             [
                 'cod' => 3,
@@ -241,6 +241,7 @@ final class PermissaoMatriz
             'act' => self::faixa(882000, 882099),
             'apps-api' => self::faixa(882100, 882199),
             'busca-ativa' => self::faixa(882200, 882299),
+            'papeis-temporarios' => self::faixa(882300, 882399),
             'servidor' => self::faixa(883000, 883099),
             'relatorios' => self::faixa(884000, 884099),
             'idiario' => [Processos::IDIARIO],

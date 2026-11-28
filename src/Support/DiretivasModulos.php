@@ -1120,6 +1120,21 @@ final class DiretivasModulos
                 'bloqueavel' => true,
                 'prefixos_rota' => ['seguranca'],
             ],
+            'papeis-temporarios' => [
+                'guia' => 'Permite acumular perfis por prazo (ex.: professor + secretário escolar). Só Admin por padrão; conceda a outros tipos pela ACL se a SME autorizar.',
+                'diretivas' => [
+                    self::ativo(),
+                ],
+                'impactos_desativar' => [
+                    'Não será possível conceder ou renovar acúmulo de perfis.',
+                    'Atribuições já vigentes continuam até a data final ou revogação manual.',
+                ],
+                'fluxos_comprometidos' => [
+                    'Cobertura temporária de secretaria / direção',
+                ],
+                'bloqueavel' => true,
+                'prefixos_rota' => ['papeis-temporarios'],
+            ],
             'setup' => [
                 'guia' => 'Infraestrutura de bootstrap. Não pode ser desligado pela cidade.',
                 'diretivas' => [
