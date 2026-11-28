@@ -84,15 +84,7 @@ jobs:
           curl -fsSL \
             "https://raw.githubusercontent.com/i-Educar/i-educar-laguna-ambiente-package/main/docs/laguna/deploys/paths.map.json" \
             -o /tmp/paths.map.json || echo '{}' > /tmp/paths.map.json
-          REL=$(python3 - <<'PY'
-import json, os
-repo = os.environ["REPO"]
-with open("/tmp/paths.map.json") as f:
-    m = json.load(f)
-rel = m.get(repo, "")
-print(rel)
-PY
-)
+          REL=$(python3 -c 'import json,os; m=json.load(open("/tmp/paths.map.json")); print(m.get(os.environ["REPO"],""))')
           if [ -z "$REL" ]; then
             # fallback: packages/buriti/<repo> (transporte tem nome de pasta diferente)
             REL="packages/buriti/${REPO}"
@@ -109,14 +101,13 @@ PY
           printf '%s\n' "${{ secrets.LAGUNA_SSH_KEY }}" > ~/.ssh/id_laguna
           chmod 600 ~/.ssh/id_laguna
           ssh-keyscan -H "${{ secrets.LAGUNA_SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
-          cat > ~/.ssh/config <<EOF
-          Host laguna
-            HostName ${{ secrets.LAGUNA_SSH_HOST }}
-            User ${{ secrets.LAGUNA_SSH_USER }}
-            IdentityFile ~/.ssh/id_laguna
-            IdentitiesOnly yes
-            StrictHostKeyChecking accept-new
-          EOF
+          printf '%s\n' \
+            'Host laguna' \
+            '  HostName ${{ secrets.LAGUNA_SSH_HOST }}' \
+            '  User ${{ secrets.LAGUNA_SSH_USER }}' \
+            '  IdentityFile ~/.ssh/id_laguna' \
+            '  IdentitiesOnly yes' \
+            '  StrictHostKeyChecking accept-new' > ~/.ssh/config
           chmod 600 ~/.ssh/config
 
       - name: Sync rsync → servidor
@@ -202,23 +193,7 @@ PY
           cd hub
           mkdir -p docs/laguna/deploys
           touch docs/laguna/deploys/REGISTRY.jsonl
-          python3 - <<'PY'
-          import json, os, datetime
-          line = {
-            "at": datetime.datetime.utcnow().replace(microsecond=0).isoformat()+"Z",
-            "repo": os.environ["REPO"],
-            "sha": os.environ["FULL"],
-            "sha_short": os.environ["SHA"],
-            "path": os.environ["REL"],
-            "actor": os.environ.get("ACTOR", ""),
-            "run_id": os.environ.get("RUN_ID", ""),
-            "run_url": os.environ.get("RUN_URL", ""),
-            "tag": os.environ.get("TAG", ""),
-            "host": "ieducar-laguna.librecode.coop",
-          }
-          with open("docs/laguna/deploys/REGISTRY.jsonl", "a") as f:
-              f.write(json.dumps(line, ensure_ascii=False) + "\n")
-          PY
+          python3 -c 'import json,os,datetime; line={"at":datetime.datetime.utcnow().replace(microsecond=0).isoformat()+"Z","repo":os.environ["REPO"],"sha":os.environ["FULL"],"sha_short":os.environ["SHA"],"path":os.environ["REL"],"actor":os.environ.get("ACTOR",""),"run_id":os.environ.get("RUN_ID",""),"run_url":os.environ.get("RUN_URL",""),"tag":os.environ.get("TAG",""),"host":"ieducar-laguna.librecode.coop"}; open("docs/laguna/deploys/REGISTRY.jsonl","a").write(json.dumps(line,ensure_ascii=False)+"\n")'
           git config user.name "i-Educar Deploy Bot"
           git config user.email "deploy-bot@users.noreply.github.com"
           git add docs/laguna/deploys/REGISTRY.jsonl
