@@ -15,11 +15,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&display=swap" rel="stylesheet">
     @foreach(($temaBuritiAssets ?? []) as $href)
-        <link rel="stylesheet" type="text/css" href="{{ $href }}?v=9">
+        {{-- assetUrls() já inclui ?v=filemtime; não duplicar --}}
+        <link rel="stylesheet" type="text/css" href="{{ $href }}">
     @endforeach
 @else
     {{-- Tokens de marca + modo mesmo com skin do core desligado --}}
-    <link rel="stylesheet" type="text/css" href="/vendor/buriti-tema/tokens.css?v=9">
+    @php
+        $temaTokens = public_path('vendor/buriti-tema/tokens.css');
+        $temaTokensV = is_file($temaTokens) ? (string) filemtime($temaTokens) : '11';
+    @endphp
+    <link rel="stylesheet" type="text/css" href="/vendor/buriti-tema/tokens.css?v={{ $temaTokensV }}">
 @endif
 <script>
 (function () {

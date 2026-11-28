@@ -6,7 +6,11 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('titulo', 'Ambiente Laguna')</title>
     <link rel="stylesheet" href="{{ url('/intranet/styles/font-awesome.css') }}">
-    <link rel="stylesheet" href="/vendor/buriti-tema/tokens.css?v=9">
+    @php
+        $temaTokensLayout = public_path('vendor/buriti-tema/tokens.css');
+        $temaTokensLayoutV = is_file($temaTokensLayout) ? (string) filemtime($temaTokensLayout) : '11';
+    @endphp
+    <link rel="stylesheet" href="/vendor/buriti-tema/tokens.css?v={{ $temaTokensLayoutV }}">
     <style>
         :root {
             /* Só marca do módulo — superfícies/tipografia vêm de tokens.css (claro/escuro) */

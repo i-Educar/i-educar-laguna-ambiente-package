@@ -37,7 +37,11 @@
     }
 })();
 </script>
-<link rel="stylesheet" href="/vendor/buriti-tema/tokens.css?v=9">
+@php
+    $temaTokensTopo = public_path('vendor/buriti-tema/tokens.css');
+    $temaTokensTopoV = is_file($temaTokensTopo) ? (string) filemtime($temaTokensTopo) : '11';
+@endphp
+<link rel="stylesheet" href="/vendor/buriti-tema/tokens.css?v={{ $temaTokensTopoV }}">
 @include('buriti-ui::estilos')
 <header class="topo topo-buriti" role="banner">
     <div class="topo-esq">
