@@ -172,6 +172,51 @@ final class PermissaoMatriz
     }
 
     /**
+     * Módulos transversais puxados pelo módulo de origem (documentos / downloads).
+     * Quem opera o módulo-origem ganha ACL da dependência; o card /exportacao no
+     * painel fica só para Admin / Secretário SME (hub de config).
+     *
+     * @return array<string, list<string>>
+     */
+    public static function dependenciasModulos(): array
+    {
+        return [
+            'transporte' => ['exportacao'],
+            'alimentacao' => ['exportacao'],
+            'almoxarifado' => ['exportacao'],
+            'biblioteca' => ['exportacao'],
+            'atendimento' => ['exportacao'],
+            'solicitacao' => ['exportacao'],
+            'horario' => ['exportacao'],
+            'eventos' => ['exportacao'],
+            'act' => ['exportacao'],
+            'busca-ativa' => ['exportacao'],
+            'servidor' => ['exportacao'],
+            'relatorios' => ['exportacao'],
+            'vagas' => ['exportacao'],
+            'censo' => ['exportacao'],
+        ];
+    }
+
+    /**
+     * Hub /exportacao no painel: só governança da rede (config/demo).
+     * Operadores exportam pelas telas do módulo de origem.
+     */
+    public static function exportacaoTemCardPainel(mixed $user): bool
+    {
+        if ($user === null) {
+            return false;
+        }
+        if (method_exists($user, 'isAdmin') && $user->isAdmin()) {
+            return true;
+        }
+
+        $tipo = (int) ($user->ref_cod_tipo_usuario ?? 0);
+
+        return $tipo === self::TIPO_ADMIN || $tipo === self::TIPO_SECRETARIO;
+    }
+
+    /**
      * Faixas de processo por módulo (menus Buriti + pré-matrícula + Ambiente Laguna).
      *
      * @return array<string, list<int>>
@@ -182,9 +227,9 @@ final class PermissaoMatriz
             'transporte' => self::faixa(880100, 880199),
             'alimentacao' => self::faixa(881100, 881199),
             'almoxarifado' => self::faixa(881400, 881499),
-            // Biblioteca e exportação compartilham a faixa 8815xx no núcleo Laguna.
-            'biblioteca' => self::faixa(881500, 881599),
-            'exportacao' => self::faixa(881500, 881599),
+            // Exportação 881500–881509 · Biblioteca 881510+ (não misturar).
+            'exportacao' => self::faixa(881500, 881509),
+            'biblioteca' => self::faixa(881510, 881599),
             'atendimento' => self::faixa(881600, 881699),
             'solicitacao' => self::faixa(881700, 881799),
             'horario' => self::faixa(881800, 881899),
@@ -351,6 +396,23 @@ final class PermissaoMatriz
             return false;
         }
 
+        // Dependência transversal: quem tem o módulo de origem acessa a exportação.
+        if ($moduloId === 'exportacao') {
+            foreach (array_keys(self::dependenciasModulos()) as $origem) {
+                if (self::usuarioPodeAcessarModuloDireto($user, $origem)) {
+                    return true;
+                }
+            }
+        }
+
+        return self::usuarioPodeAcessarModuloDireto($user, $moduloId);
+    }
+
+    /**
+     * ACL direta do módulo (sem expandir dependências reversas).
+     */
+    private static function usuarioPodeAcessarModuloDireto(mixed $user, string $moduloId): bool
+    {
         $processos = self::faixasModulo()[$moduloId] ?? null;
         if ($processos === null) {
             foreach (CatalogoModulos::todos() as $mod) {
@@ -399,14 +461,49 @@ final class PermissaoMatriz
     }
 
     /**
+     * Expande módulos do perfil com dependências transversais (ex.: almox → exportação).
+     *
+     * @param  list<string>|'*'  $modulos
+     * @param  list<string>  $excluir
+     * @return list<string>|'*'
+     */
+    public static function modulosComDependencias(array|string $modulos, array $excluir = []): array|string
+    {
+        if ($modulos === '*') {
+            return '*';
+        }
+
+        $deps = self::dependenciasModulos();
+        $out = [];
+        $fila = array_values($modulos);
+        while ($fila !== []) {
+            $mod = array_shift($fila);
+            if (! is_string($mod) || $mod === '' || in_array($mod, $excluir, true)) {
+                continue;
+            }
+            if (in_array($mod, $out, true)) {
+                continue;
+            }
+            $out[] = $mod;
+            foreach ($deps[$mod] ?? [] as $dep) {
+                if (! in_array($dep, $out, true) && ! in_array($dep, $excluir, true)) {
+                    $fila[] = $dep;
+                }
+            }
+        }
+
+        return $out;
+    }
+
+    /**
      * @param  Perfil  $perfil
      * @return list<int>
      */
     public static function processosDoPerfil(array $perfil): array
     {
         $faixas = self::faixasModulo();
-        $modulos = $perfil['modulos'];
         $excluir = $perfil['excluir_modulos'] ?? [];
+        $modulos = self::modulosComDependencias($perfil['modulos'], $excluir);
 
         if ($modulos === '*') {
             $ids = [];

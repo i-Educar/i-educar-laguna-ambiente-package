@@ -690,18 +690,19 @@ final class DiretivasModulos
                 'prefixos_rota' => ['apps-api', 'api/apps'],
             ],
             'exportacao' => [
-                'guia' => 'Pacote de exportações oficiais. Em geral permanece ativo; não há contato público.',
+                'guia' => 'Transversal: os documentos saem das telas do módulo de origem (alimentação, almox, biblioteca…). O hub /exportacao é para config/demo da SME. Em geral permanece ativo.',
                 'diretivas' => [
                     self::ativo(),
                 ],
                 'impactos_desativar' => [
-                    'Exportações unificadas da rede ficam indisponíveis.',
+                    'Downloads/PDF/QR dos módulos de origem ficam indisponíveis.',
                 ],
                 'fluxos_comprometidos' => [
                     'Entregas oficiais / pacotes de dados',
+                    'Botões Download nas telas dos módulos',
                 ],
                 'bloqueavel' => true,
-                'prefixos_rota' => [],
+                'prefixos_rota' => ['exportacao'],
             ],
             'escolar' => [
                 'guia' => 'Aderência escolar (ondas Laguna). Ative para expor as ferramentas na rede.',

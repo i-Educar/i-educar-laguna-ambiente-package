@@ -46,6 +46,21 @@ $assert(
     'secretário sem Ambiente Laguna'
 );
 
+$almox = null;
+foreach ($perfis as $p) {
+    if ((int) ($p['cod'] ?? 0) === 8) {
+        $almox = $p;
+        break;
+    }
+}
+$assert($almox !== null, 'perfil operador almox existe');
+$modsAlmox = PermissaoMatriz::modulosComDependencias($almox['modulos']);
+$assert(is_array($modsAlmox) && in_array('exportacao', $modsAlmox, true), 'almox puxa dependência exportação');
+$assert(in_array('almoxarifado', $modsAlmox, true), 'almox mantém módulo origem');
+$deps = PermissaoMatriz::dependenciasModulos();
+$assert(($deps['biblioteca'][0] ?? '') === 'exportacao', 'biblioteca depende de exportação');
+$assert(($deps['alimentacao'][0] ?? '') === 'exportacao', 'alimentação depende de exportação');
+
 /* —— Skins / TemaBuriti —— */
 $skins = TemaBuriti::catalogo();
 $assert(count($skins) === 6, 'catálogo de skins = 6 (nenhum+5)');
