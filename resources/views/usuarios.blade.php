@@ -10,7 +10,7 @@
 @endsection
 
 @section('acoes-topo')
-    <a class="botao claro" href="{{ url('/apps-api/governanca') }}"><i class="fa fa-shield"></i> Governança completa</a>
+    <a class="botao claro icone" href="{{ url('/apps-api/governanca') }}" title="Governança completa" aria-label="Governança completa"><i aria-hidden="true" class="fa fa-shield"></i></a>
 @endsection
 
 @section('conteudo')
@@ -22,6 +22,36 @@
             <span>Apps</span>
             <strong>{{ !empty($resumo['apps_on']) ? 'ON' : 'OFF' }}</strong>
         </article>
+    </div>
+
+    <div class="bloco" id="senha-ciclica">
+        <h2><i class="fa fa-key" style="color:var(--destaque)"></i> Política de senha (4.7)</h2>
+        <p style="margin:0 0 10px;color:var(--suave)">
+            Define ciclo de expiração por usuário e/ou força troca no próximo login.
+        </p>
+        <form method="post" action="{{ url('/laguna-ambiente/usuarios/senha') }}" style="display:grid;gap:12px;max-width:520px">
+            @csrf
+            <label style="display:grid;gap:4px;font-size:.8rem;font-weight:700;color:var(--suave)">Usuário
+                <select name="usuario_id" required style="min-height:36px;padding:6px 8px;border:1px solid var(--linha);border-radius:8px;font:inherit">
+                    <option value="">Selecione…</option>
+                    @foreach($usuariosAtivos ?? [] as $u)
+                        <option value="{{ $u['id'] }}">{{ ($u['nome'] ?: '—').' · '.($u['login'] ?? '') }}</option>
+                    @endforeach
+                </select>
+            </label>
+            <label style="display:grid;gap:4px;font-size:.8rem;font-weight:700;color:var(--suave)">Dias até expirar
+                <input type="number" name="dias_expiracao_senha" min="1" max="730" placeholder="vazio = padrão do sistema"
+                       style="min-height:36px;padding:6px 8px;border:1px solid var(--linha);border-radius:8px;font:inherit">
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:.9rem">
+                <input type="checkbox" name="forcar_troca" value="1"> Forçar troca no próximo login
+            </label>
+            <div style="display:flex;justify-content:flex-end">
+                <button class="botao" type="submit" @if(empty($usuariosAtivos)) disabled @endif>
+                    <i class="fa fa-save"></i> Aplicar política
+                </button>
+            </div>
+        </form>
     </div>
 
     <div class="bloco" id="suspender">

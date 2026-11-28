@@ -243,9 +243,18 @@ $assert(str_contains(InformesModulo::urlConfiguracao('act'), 'modulo=act'), 'URL
 $assert(str_contains(InformesModulo::urlConfiguracao('act'), 'abrir=1'), 'URL config força abrir modal');
 $viewInformes = dirname(__DIR__).'/resources/views/ui/informes-modulo.blade.php';
 $assert(is_file($viewInformes), 'view informes-modulo presente');
+$informesSrc = (string) file_get_contents($viewInformes);
+$assert(str_contains($informesSrc, 'fa-question') && str_contains($informesSrc, 'botao icone ajuda'), 'cabeçalho inclui botão Ajuda (?)');
 $assert(is_file(dirname(__DIR__).'/resources/views/ui/informes-modulo-corpo.blade.php'), 'view informes-modulo-corpo presente');
+$estilosSrc = (string) file_get_contents(dirname(__DIR__).'/resources/views/ui/estilos.blade.php');
+$assert(str_contains($estilosSrc, '.botao.icone') && str_contains($estilosSrc, '.botao.ajuda'), 'estilos padronizam botão ícone e ajuda');
 $exportPartial = dirname(__DIR__, 2).'/i-educar-exportacao-unificada-package/resources/views/partials/botoes-exportar.blade.php';
-$assert(is_file($exportPartial) && str_contains((string) file_get_contents($exportPartial), 'informes-modulo'), 'Download inclui Informes');
+$exportSrc = is_file($exportPartial) ? (string) file_get_contents($exportPartial) : '';
+$assert($exportSrc !== '' && str_contains($exportSrc, 'informes-modulo'), 'Download inclui Informes');
+$assert(str_contains($exportSrc, 'botao icone') && str_contains($exportSrc, 'aria-label'), 'Download só com ícone');
+$assert(InformesModulo::ajudaJaRenderizada() === false, 'ajuda ainda não renderizada no boot do teste');
+InformesModulo::marcarAjudaRenderizada();
+$assert(InformesModulo::ajudaJaRenderizada() === true, 'ajuda marcada como renderizada');
 
 /* —— Providers no config/app.php (cenário pós-reinstalação do BI) —— */
 $appConfig = dirname(__DIR__, 4).'/config/app.php';

@@ -17,6 +17,7 @@ Route::prefix('laguna-ambiente')->middleware([ExigeAdmin::class])->group(functio
     Route::get('/tema', [AmbienteController::class, 'temaForm']);
     Route::post('/tema', [AmbienteController::class, 'temaSalvar']);
     Route::get('/usuarios', [AmbienteController::class, 'usuarios']);
+    Route::post('/usuarios/senha', [AmbienteController::class, 'politicaSenha']);
 });
 
 Route::prefix('configuracoes')->middleware([ExigeAdmin::class])->group(function (): void {

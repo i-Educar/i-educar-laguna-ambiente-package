@@ -1,5 +1,8 @@
 {{--
-  Botão Informes (ao lado do Download) + modal de leitura das infos complementares.
+  Ações de sistema do cabeçalho (após @yield('acoes-topo')):
+  - Informes (I) quando o módulo tem complementares
+  - Ajuda (?) sempre — função a definir depois
+
   @include('buriti-ui::informes-modulo', ['moduloId' => 'transporte'])
   Sem moduloId: resolve pela URL atual (prefixos_rota).
 --}}
@@ -8,7 +11,7 @@
     $moduloId = isset($moduloId) && is_string($moduloId) && $moduloId !== ''
         ? $moduloId
         : (class_exists($Informes) ? $Informes::idDaRequisicao() : null);
-    $mostrar = false;
+    $mostrarInformes = false;
     $secoes = [];
     $nomeModulo = '';
     $podeAlterar = false;
@@ -21,18 +24,23 @@
         && ! $Informes::jaRenderizado($moduloId)
     ) {
         $Informes::marcarRenderizado($moduloId);
-        $mostrar = true;
+        $mostrarInformes = true;
         $secoes = $Informes::secoes($moduloId);
         $nomeModulo = $Informes::nomeModulo($moduloId);
         $podeAlterar = $Informes::podeAlterar();
         $urlConfig = $Informes::urlConfiguracao($moduloId);
         $modalId = 'informes-mod-'.$moduloId;
     }
+
+    $mostrarAjuda = class_exists($Informes) && ! $Informes::ajudaJaRenderizada();
+    if ($mostrarAjuda) {
+        $Informes::marcarAjudaRenderizada();
+    }
 @endphp
 
-@if($mostrar)
+@if($mostrarInformes)
 <button type="button"
-        class="botao informes"
+        class="botao icone informes"
         data-buriti-modal="{{ $modalId }}"
         title="Informações complementares do módulo"
         aria-label="Informes do módulo">
@@ -50,4 +58,16 @@
         'nomeModulo' => $nomeModulo,
     ])->render(),
 ])
+@endif
+
+@if($mostrarAjuda)
+<button type="button"
+        class="botao icone ajuda"
+        title="Ajuda"
+        aria-label="Ajuda"
+        data-buriti-ajuda
+        disabled
+        aria-disabled="true">
+    <i class="fa fa-question" aria-hidden="true"></i>
+</button>
 @endif

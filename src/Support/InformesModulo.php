@@ -13,6 +13,8 @@ final class InformesModulo
     /** @var array<string, true> */
     private static array $renderizado = [];
 
+    private static bool $ajudaRenderizada = false;
+
     private const array GRUPOS = ['setor', 'rede_apoio'];
 
     private const array ROTULOS_GRUPO = [
@@ -149,5 +151,16 @@ final class InformesModulo
     public static function marcarRenderizado(string $moduloId): void
     {
         self::$renderizado[$moduloId] = true;
+    }
+
+    /** Botão Ajuda (?) do cabeçalho — uma vez por resposta. */
+    public static function ajudaJaRenderizada(): bool
+    {
+        return self::$ajudaRenderizada;
+    }
+
+    public static function marcarAjudaRenderizada(): void
+    {
+        self::$ajudaRenderizada = true;
     }
 }

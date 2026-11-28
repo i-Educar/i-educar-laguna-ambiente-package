@@ -195,6 +195,35 @@ class AmbienteController
         ]);
     }
 
+    /** 4.7 — política de senha cíclica + forçar troca. */
+    public function politicaSenha(Request $request): RedirectResponse
+    {
+        $userId = (int) $request->input('usuario_id', 0);
+        $diasRaw = $request->input('dias_expiracao_senha');
+        $dias = ($diasRaw === null || $diasRaw === '') ? null : max(1, (int) $diasRaw);
+        $forcar = $request->boolean('forcar_troca');
+
+        if ($userId <= 0) {
+            return redirect('/laguna-ambiente/usuarios')->with('erro', 'Selecione um usuário.');
+        }
+
+        $okExp = \iEducar\Packages\BuritiLagunaAmbiente\Services\PoliticaSenhaUsuario::definirExpiracao($userId, $dias);
+        $okFor = true;
+        if ($forcar) {
+            $okFor = \iEducar\Packages\BuritiLagunaAmbiente\Services\PoliticaSenhaUsuario::forcarTroca($userId, true);
+        }
+
+        if (! $okExp && ! $okFor) {
+            return redirect('/laguna-ambiente/usuarios')->with('erro', 'Usuário sem vínculo em portal.employees.');
+        }
+
+        return redirect('/laguna-ambiente/usuarios')
+            ->with('ok', 'Política de senha atualizada'
+                .($dias !== null ? " (expira em {$dias} dias)" : ' (sem ciclo individual)')
+                .($forcar ? ' · troca forçada no próximo login' : '')
+                .'.');
+    }
+
     public function temaSalvar(Request $request): RedirectResponse
     {
         $skin = (string) $request->input('skin', '');

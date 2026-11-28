@@ -287,8 +287,7 @@
             <a href="{{ url('/laguna-ambiente/tema') }}" class="@if(str_contains($path, 'tema')) ativo @endif"><i class="fa fa-paint-brush"></i> Skins da escola</a>
             <a href="{{ url('/laguna-ambiente/usuarios') }}" class="@if(str_contains($path, 'usuarios')) ativo @endif"><i class="fa fa-user-times"></i> Suspender usuários</a>
             <a href="{{ url('/configuracoes/modulos') }}" class="@if(str_contains($path, 'configuracoes/modulos')) ativo @endif"><i class="fa fa-cubes"></i> Módulos</a>
-            <a href="{{ url('/apps-api/configuracao') }}"><i class="fa fa-mobile"></i> APIs</a>
-            <a href="{{ url('/apps-api/governanca') }}"><i class="fa fa-shield"></i> Governança apps</a>
+            <a href="{{ url('/apps-api/configuracao') }}" class="@if(str_starts_with($path, 'apps-api')) ativo @endif"><i class="fa fa-mobile"></i> APP e Governança</a>
         </nav>
     </aside>
     <div class="miolo">
@@ -313,8 +312,7 @@
                 ]],
                 ['nome' => 'Administração', 'itens' => [
                     ['chave' => 'modulos', 'rotulo' => 'Módulos', 'url' => '/configuracoes/modulos', 'icone' => 'fa-cubes'],
-                    ['chave' => 'apps', 'rotulo' => 'APIs', 'url' => '/apps-api/configuracao', 'icone' => 'fa-mobile'],
-                    ['chave' => 'gov', 'rotulo' => 'Governança', 'url' => '/apps-api/governanca', 'icone' => 'fa-shield'],
+                    ['chave' => 'apps', 'rotulo' => 'APP e Governança', 'url' => '/apps-api/configuracao', 'icone' => 'fa-mobile'],
                 ]],
             ];
         @endphp

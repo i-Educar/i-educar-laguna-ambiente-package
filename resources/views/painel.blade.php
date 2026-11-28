@@ -9,9 +9,9 @@
 @endsection
 
 @section('acoes-topo')
-    <a class="botao" href="{{ url('/laguna-ambiente/check') }}"><i class="fa fa-stethoscope"></i> Verificar</a>
-    <a class="botao claro" href="{{ url('/laguna-ambiente/setup') }}"><i class="fa fa-flask"></i> Setup</a>
-    <a class="botao claro" href="{{ url('/laguna-ambiente/simulacao') }}"><i class="fa fa-users"></i> Simulação</a>
+    <a class="botao icone" href="{{ url('/laguna-ambiente/check') }}" title="Verificar" aria-label="Verificar"><i aria-hidden="true" class="fa fa-stethoscope"></i></a>
+    <a class="botao claro icone" href="{{ url('/laguna-ambiente/setup') }}" title="Setup" aria-label="Setup"><i aria-hidden="true" class="fa fa-flask"></i></a>
+    <a class="botao claro icone" href="{{ url('/laguna-ambiente/simulacao') }}" title="Simulação" aria-label="Simulação"><i aria-hidden="true" class="fa fa-users"></i></a>
 @endsection
 
 @section('conteudo')
@@ -280,9 +280,9 @@
                 </a>
             </li>
             <li>
-                <a href="{{ url('/apps-api/governanca') }}">
-                    <i class="fa fa-shield" style="background:#0f6b5c"></i>
-                    <span>Governança apps<small>Tokens e suspensões</small></span>
+                <a href="{{ url('/apps-api/configuracao') }}">
+                    <i class="fa fa-mobile" style="background:#2f6bff"></i>
+                    <span>APP e Governança<small>Configuração, tokens e suspensões</small></span>
                 </a>
             </li>
         </ul>

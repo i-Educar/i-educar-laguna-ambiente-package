@@ -5,7 +5,7 @@
 @section('icone-tela', 'fa-sliders')
 @section('titulo-tela', 'Configuração dos módulos')
 @section('lead')
-    Clique em um cartão para configurar. Ativação, setor da SME, regras e rede de apoio ficam neste painel — sem telas soltas dentro de cada módulo.
+    Clique em um cartão para ativar o módulo e o contato do setor. Em APP e Governança use a entrada do módulo para configuração, tokens e suspensões.
 @endsection
 
 @section('conteudo')
@@ -102,7 +102,7 @@
             $g = $d['grupo'] ?? (str_starts_with((string) ($d['chave'] ?? ''), 'setor_') ? 'setor' : (str_starts_with((string) ($d['chave'] ?? ''), 'rede_') ? 'rede_apoio' : (in_array($d['chave'] ?? '', ['portal_externo', 'aparecer_na_home'], true) ? 'acesso' : 'regras')));
             $porGrupo[$g][] = $d;
         }
-        $ordemGrupos = ['acesso', 'regras', 'setor', 'rede_apoio'];
+        $ordemGrupos = ['acesso', 'libresign', 'signatarios', 'regras', 'setor', 'rede_apoio'];
     @endphp
     @include('buriti-ui::operacao-modal', [
         'id' => 'cfg-'.$m['id'],

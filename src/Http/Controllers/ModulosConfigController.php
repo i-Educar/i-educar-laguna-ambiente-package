@@ -31,6 +31,8 @@ class ModulosConfigController
             'gruposRotulo' => [
                 'geral' => 'Geral',
                 'acesso' => 'Acesso externo',
+                'libresign' => 'Instância LibreSign',
+                'signatarios' => 'Contas signatárias',
                 'setor' => 'Setor responsável (SME)',
                 'rede_apoio' => 'Rede de apoio / proteção',
                 'regras' => 'Regras e limites',
@@ -61,6 +63,7 @@ class ModulosConfigController
                     .(isset($d['max']) ? '|max:'.$d['max'] : ''),
                 'email' => 'nullable|email|max:'.((int) ($d['maxlength'] ?? 120)),
                 'url' => 'nullable|url|max:'.((int) ($d['maxlength'] ?? 240)),
+                'password' => 'nullable|string|max:'.((int) ($d['maxlength'] ?? 240)),
                 'tel' => 'nullable|string|max:'.((int) ($d['maxlength'] ?? 20)),
                 'date' => 'nullable|date',
                 'select' => 'nullable|string|max:64',

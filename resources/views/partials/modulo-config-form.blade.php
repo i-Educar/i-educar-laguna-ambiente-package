@@ -82,8 +82,23 @@
         </label>
     </details>
 
+    @php $adminLinks = is_array($m['admin_links'] ?? null) ? $m['admin_links'] : []; @endphp
+    @if($m['ativo'] && $adminLinks !== [])
+        <div class="bloco" style="margin:0 0 12px;padding:12px 14px;border:1px solid var(--linha);border-radius:12px;background:#f8fafc">
+            <p style="margin:0 0 8px;font-size:.75rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--suave)">Abrir no módulo</p>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+                @foreach($adminLinks as $link)
+                    <a class="botao" href="{{ url($link['url']) }}">
+                        <i class="fa {{ $link['icone'] ?? 'fa-external-link' }}"></i>
+                        {{ $link['rotulo'] ?? 'Abrir' }}
+                    </a>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     <div class="cfg-acoes">
-        @if(!empty($m['admin_url']) && $m['ativo'])
+        @if($adminLinks === [] && !empty($m['admin_url']) && $m['ativo'])
             <a class="botao claro" href="{{ url($m['admin_url']) }}"><i class="fa fa-external-link"></i> Abrir módulo</a>
         @endif
         <button type="button" class="botao claro" data-buriti-fechar>Cancelar</button>

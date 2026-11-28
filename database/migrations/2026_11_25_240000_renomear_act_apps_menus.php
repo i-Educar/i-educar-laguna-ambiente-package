@@ -5,7 +5,7 @@ use App\Services\MenuCacheService;
 use Illuminate\Database\Migrations\Migration;
 
 /**
- * Identidade visual: ACT → Contratações · Apps API → APIs (menus do núcleo).
+ * Identidade visual: ACT → Contratações · Apps API → APP e Governança (menus do núcleo).
  */
 return new class extends Migration
 {
@@ -30,14 +30,14 @@ return new class extends Migration
                     ->orWhere('title', 'APPS')
                     ->orWhere('title', 'Apps');
             })
-            ->update(['title' => 'APIs']);
+            ->update(['title' => 'APP e Governança']);
 
         Menu::query()
             ->where('link', '/apps-api/configuracao')
             ->where(function ($q): void {
                 $q->whereNull('parent_id')->orWhere('title', 'like', 'App%');
             })
-            ->update(['title' => 'APIs']);
+            ->update(['title' => 'APP e Governança']);
 
         if (class_exists(MenuCacheService::class)) {
             try {
@@ -57,7 +57,7 @@ return new class extends Migration
             ->update(['title' => 'Contratações temporárias']);
 
         Menu::query()
-            ->where('title', 'APIs')
+            ->where('title', 'APP e Governança')
             ->where(function ($q): void {
                 $q->where('link', 'like', '/apps-api%')->orWhere('process', 882101);
             })

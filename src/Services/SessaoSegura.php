@@ -2,13 +2,16 @@
 
 namespace iEducar\Packages\BuritiLagunaAmbiente\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
+use Throwable;
 
 /**
  * 4.10: Encerramento imediato de sessões quando usuário é desabilitado
  * 
  * Garante que ao desabilitar um usuário, todas as suas sessões e tokens
- * são invalidados imediatamente.
+ * são invalidados imediatamente. Em cluster: flag em Cache + publish Redis.
  */
 class SessaoSegura
 {
@@ -24,6 +27,8 @@ class SessaoSegura
             'sessions' => 0,
             'sanctum_tokens' => 0,
             'token_version_updated' => false,
+            'cache_kill' => false,
+            'redis_publish' => false,
         ];
 
         // 1. Revogar tokens Sanctum (APIs/mobile)

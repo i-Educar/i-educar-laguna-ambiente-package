@@ -740,8 +740,9 @@
 
     .buriti-trilho,
     .acoes-tela {
-        display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+        display: flex; flex-wrap: nowrap; align-items: center; gap: 8px;
     }
+    .acoes-tela { flex: none; }
     .buriti-trilho {
         margin: 0 0 14px; padding: 10px 12px; border-radius: 14px;
         background: color-mix(in srgb, #fff 88%, var(--clara, #e8eef2));
@@ -766,6 +767,23 @@
         border: 1px solid var(--linha);
     }
     .botao.mais { order: 5; }
+    /*
+     * Padrão de ações do cabeçalho (todos os módulos):
+     * botões só com ícone + title/aria-label; ao fim: Informes (I) e Ajuda (?).
+     */
+    .botao.icone,
+    .acoes-tela > .botao,
+    .acoes-tela > form > .botao,
+    .acoes-tela > form > button.botao {
+        width: 40px; min-width: 40px; height: 40px; min-height: 40px;
+        padding: 0; gap: 0; justify-content: center; flex: none;
+        white-space: nowrap;
+    }
+    .botao.icone i,
+    .acoes-tela > .botao > i,
+    .acoes-tela > form > .botao > i {
+        font-size: 1.05rem; line-height: 1; margin: 0;
+    }
     /* Informes: só ícone + cor de informação (azul), sem texto */
     .botao.informes {
         order: 8;
@@ -777,6 +795,34 @@
     }
     .botao.informes:hover { filter: brightness(1.06); background: #185fc0; }
     .botao.informes i { font-size: 1.05rem; line-height: 1; margin: 0; }
+    /* Ajuda (?): placeholder — função depois */
+    .botao.ajuda {
+        order: 9;
+        width: 40px; min-width: 40px; height: 40px; min-height: 40px;
+        padding: 0; gap: 0; justify-content: center;
+        border-radius: 10px;
+        background: var(--superficie, #fff);
+        color: var(--cor-tela, var(--cor, #1a5f9e));
+        border: 1px solid color-mix(in srgb, var(--cor-tela, var(--cor)) 35%, var(--linha, #cfd8df));
+    }
+    .botao.ajuda:hover {
+        background: color-mix(in srgb, var(--clara, #e8eef2) 55%, #fff);
+        border-color: color-mix(in srgb, var(--cor-tela, var(--cor)) 50%, var(--linha));
+    }
+    .botao.ajuda i { font-size: 1.05rem; line-height: 1; margin: 0; }
+    .botao.alerta-semaforo { color: #b42318; border-color: color-mix(in srgb, #b42318 35%, var(--linha, #cfd8df)); }
+    .botao.alerta-semaforo:hover { background: #fdeceb; }
+    .icone-semaforo {
+        display: inline-grid; gap: 2px; place-items: center; width: 14px; padding: 3px 2px;
+        border-radius: 5px; background: #1f2933; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+    }
+    .icone-semaforo i {
+        width: 7px; height: 7px; border-radius: 50%; display: block;
+        background: #4b5563; box-shadow: inset 0 0 0 1px rgba(0,0,0,.25);
+    }
+    .icone-semaforo i:nth-child(1) { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,.75); }
+    .icone-semaforo i:nth-child(2) { background: #6b7280; }
+    .icone-semaforo i:nth-child(3) { background: #4b5563; }
     .botao.perigo {
         order: 9; background: var(--erro, #9b2c2c); color: #fff; border: 0;
     }

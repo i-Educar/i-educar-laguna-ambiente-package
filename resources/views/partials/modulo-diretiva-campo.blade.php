@@ -81,6 +81,17 @@
                title="Inclua https://">
         @if(!empty($d['ajuda'])) <small>{{ $d['ajuda'] }}</small> @endif
     </label>
+@elseif($tipo === 'password')
+    <label class="cfg-campo">
+        <span class="cfg-rotulo">{{ $d['rotulo'] }}</span>
+        <input type="password" name="{{ $nome }}" value=""
+               maxlength="{{ $d['maxlength'] ?? 240 }}" autocomplete="new-password"
+               placeholder="{{ $d['placeholder'] ?? '••••••••' }}"
+               title="Deixe em branco para manter a senha atual">
+        @if(!empty($d['ajuda'])) <small>{{ $d['ajuda'] }}</small> @else
+            <small>Deixe em branco para manter a senha já gravada.</small>
+        @endif
+    </label>
 @elseif($tipo === 'date')
     <label class="cfg-campo">
         <span class="cfg-rotulo">{{ $d['rotulo'] }}</span>

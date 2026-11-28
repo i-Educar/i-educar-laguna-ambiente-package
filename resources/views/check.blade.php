@@ -11,13 +11,11 @@
 @section('acoes-topo')
     <form method="post" action="{{ url('/laguna-ambiente/check/testar') }}" style="display:inline" data-confirm-testes>
         @csrf
-        <button class="botao" type="submit" title="Roda tests/run.php de cada módulo e atualiza pendências">
-            <i class="fa fa-play"></i> Rodar testes
-        </button>
+        <button class="botao icone" type="submit" title="Roda tests/run.php de cada módulo e atualiza pendências" aria-label="Rodar testes"><i aria-hidden="true" class="fa fa-play"></i></button>
     </form>
-    <a class="botao claro" href="{{ url('/laguna-ambiente/check') }}"><i class="fa fa-refresh"></i> Atualizar</a>
-    <a class="botao claro" href="{{ url('/laguna-ambiente/setup') }}"><i class="fa fa-flask"></i> Setup</a>
-    <a class="botao claro" href="{{ url('/laguna-ambiente') }}"><i class="fa fa-heartbeat"></i> Painel</a>
+    <a class="botao claro icone" href="{{ url('/laguna-ambiente/check') }}" title="Atualizar" aria-label="Atualizar"><i aria-hidden="true" class="fa fa-refresh"></i></a>
+    <a class="botao claro icone" href="{{ url('/laguna-ambiente/setup') }}" title="Setup" aria-label="Setup"><i aria-hidden="true" class="fa fa-flask"></i></a>
+    <a class="botao claro icone" href="{{ url('/laguna-ambiente') }}" title="Painel" aria-label="Painel"><i aria-hidden="true" class="fa fa-heartbeat"></i></a>
 @endsection
 
 @section('conteudo')

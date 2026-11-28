@@ -222,6 +222,7 @@ final class ModuloConfiguracao
                 'cor' => $mod['cor'] ?? '#5b6b76',
                 'icone' => $mod['icone'] ?? 'fa-cube',
                 'admin_url' => $mod['admin_url'] ?? null,
+                'admin_links' => is_array($mod['admin_links'] ?? null) ? $mod['admin_links'] : [],
                 'processos' => $mod['processos'] ?? [],
                 'ativo' => $ativo,
                 'tenant_ok' => $tenantOk,
@@ -296,14 +297,38 @@ final class ModuloConfiguracao
                 continue;
             }
             $valor = array_key_exists($chave, $diretivas) ? $diretivas[$chave] : ($d['padrao'] ?? '');
+            // Senha em branco = manter valor já salvo / config atual (não apagar).
+            if (($d['tipo'] ?? '') === 'password') {
+                $novo = is_string($valor) ? trim($valor) : (string) $valor;
+                if ($novo === '') {
+                    $anteriores = self::diretivasSalvas($id);
+                    if (array_key_exists($chave, $anteriores) && (string) $anteriores[$chave] !== '') {
+                        $limpas[$chave] = $anteriores[$chave];
+                        if (! empty($d['config'])) {
+                            Config::set((string) $d['config'], $anteriores[$chave]);
+                        }
+                        continue;
+                    }
+                    if (! empty($d['config'])) {
+                        $atualCfg = config((string) $d['config']);
+                        if (is_string($atualCfg) && $atualCfg !== '') {
+                            $limpas[$chave] = $atualCfg;
+                            continue;
+                        }
+                    }
+                    $limpas[$chave] = '';
+                    continue;
+                }
+                $valor = $novo;
+            }
             $valor = match ($d['tipo']) {
                 'bool' => self::truthy($valor),
                 'int' => (int) $valor,
                 'float' => (float) $valor,
                 'email' => is_string($valor) ? trim($valor) : '',
-                'tel' => is_string($valor) ? (preg_replace('/[^\d]/', '', trim($valor)) ?? '') : '',
+                'tel' => is_string($valor) ? (preg_replace('/[^\d]+/', '', trim($valor)) ?? '') : '',
                 'select' => is_string($valor) ? trim($valor) : (string) $valor,
-                'textarea', 'string', 'url', 'date' => is_string($valor) ? trim($valor) : (string) $valor,
+                'password', 'textarea', 'string', 'url', 'date' => is_string($valor) ? trim($valor) : (string) $valor,
                 default => $valor,
             };
             if (($d['tipo'] ?? '') === 'tel' && $valor !== '') {
@@ -642,25 +667,9 @@ final class ModuloConfiguracao
             }
         }
 
-        if ($id === 'apps-api'
-            && class_exists(\iEducar\Packages\BuritiAppsApi\Services\AppsConfigService::class)) {
-            try {
-                $estado = app(\iEducar\Packages\BuritiAppsApi\Services\AppsConfigService::class)->estadoAtual();
-                $features = is_array($estado['features'] ?? null) ? $estado['features'] : [];
-
-                return [
-                    'require_login' => (bool) ($estado['require_login'] ?? true),
-                    'token_ttl_minutes' => (int) ($estado['token_ttl_minutes'] ?? 43200),
-                    'suspension_message' => (string) ($estado['suspension_message'] ?? ''),
-                    'feature_familia' => (bool) ($features['familia'] ?? true),
-                    'feature_professor' => (bool) ($features['professor'] ?? true),
-                    'feature_admin' => (bool) ($features['admin'] ?? true),
-                    'feature_exportacao' => (bool) ($features['exportacao'] ?? true),
-                    'feature_diario' => (bool) ($features['diario'] ?? true),
-                ];
-            } catch (Throwable) {
-                return [];
-            }
+        // Flags detalhadas da Apps API ficam em /apps-api/configuracao (não no painel central).
+        if ($id === 'apps-api') {
+            return [];
         }
 
         if ($id === 'alimentacao'
@@ -736,21 +745,15 @@ final class ModuloConfiguracao
         if ($id === 'apps-api'
             && class_exists(\iEducar\Packages\BuritiAppsApi\Services\AppsConfigService::class)) {
             try {
+                // Painel central só liga/desliga o módulo; demais flags no próprio apps-api.
                 $svc = app(\iEducar\Packages\BuritiAppsApi\Services\AppsConfigService::class);
                 $antes = $svc->estadoAtual();
-                $features = is_array($antes['features'] ?? null) ? $antes['features'] : [];
-                foreach (['familia', 'professor', 'admin', 'exportacao', 'diario'] as $feat) {
-                    $chave = 'feature_'.$feat;
-                    if (array_key_exists($chave, $limpas)) {
-                        $features[$feat] = self::truthy($limpas[$chave]);
-                    }
-                }
                 $svc->salvar([
                     'enabled' => $ativo,
-                    'require_login' => self::truthy($limpas['require_login'] ?? true),
-                    'token_ttl_minutes' => (int) ($limpas['token_ttl_minutes'] ?? 43200),
-                    'suspension_message' => (string) ($limpas['suspension_message'] ?? ''),
-                    'features' => $features,
+                    'require_login' => (bool) ($antes['require_login'] ?? true),
+                    'token_ttl_minutes' => (int) ($antes['token_ttl_minutes'] ?? 43200),
+                    'suspension_message' => (string) ($antes['suspension_message'] ?? ''),
+                    'features' => is_array($antes['features'] ?? null) ? $antes['features'] : [],
                 ]);
             } catch (Throwable) {
             }
@@ -851,6 +854,14 @@ final class ModuloConfiguracao
                     'exigir_motivo_suspensao' => self::truthy($limpas['exigir_motivo_suspensao'] ?? true),
                     'passkeys_rp_name' => (string) ($limpas['passkeys_rp_name'] ?? 'i-Educar'),
                 ]);
+            } catch (Throwable) {
+            }
+        }
+
+        if ($id === 'assinatura'
+            && class_exists(\iEducar\Packages\BuritiAssinaturaDigital\Services\ConfigAssinatura::class)) {
+            try {
+                \iEducar\Packages\BuritiAssinaturaDigital\Services\ConfigAssinatura::aplicar($ativo, $limpas);
             } catch (Throwable) {
             }
         }

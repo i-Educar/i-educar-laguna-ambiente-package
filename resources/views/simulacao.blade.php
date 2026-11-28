@@ -10,8 +10,8 @@
 @endsection
 
 @section('acoes-topo')
-    <a class="botao claro" href="{{ url('/laguna-ambiente/setup') }}"><i class="fa fa-flask"></i> Setup</a>
-    <a class="botao claro" href="{{ url('/laguna-ambiente/check') }}"><i class="fa fa-stethoscope"></i> Verificar</a>
+    <a class="botao claro icone" href="{{ url('/laguna-ambiente/setup') }}" title="Setup" aria-label="Setup"><i aria-hidden="true" class="fa fa-flask"></i></a>
+    <a class="botao claro icone" href="{{ url('/laguna-ambiente/check') }}" title="Verificar" aria-label="Verificar"><i aria-hidden="true" class="fa fa-stethoscope"></i></a>
 @endsection
 
 @section('conteudo')
