@@ -47,7 +47,8 @@ final class ModulosDeployCatalogo
             $sha = (string) ($infoLocal['sha'] ?? $infoManifest['sha'] ?? '');
             $tag = (string) ($infoLocal['tag'] ?? $infoManifest['tag'] ?? '');
 
-            if (! $instalado && ! $ativo) {
+            // Painel CI: só o que está no servidor (instalado). Ativo/off aparece no badge.
+            if (! $instalado) {
                 continue;
             }
 

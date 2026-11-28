@@ -1,16 +1,22 @@
 <div id="buriti-painel-modulos-deploy" hidden
      data-buriti-modulos-deploy-painel
      data-url="{{ $urlJson }}"
-     style="position:fixed;inset:0;z-index:80;display:none;align-items:flex-end;justify-content:center;padding:12px;background:rgba(15,30,40,.35)">
+     style="position:fixed;inset:0;z-index:90;display:none;align-items:flex-end;justify-content:center;padding:12px;background:rgba(15,30,40,.35)">
     <div role="dialog" aria-modal="true" aria-labelledby="buriti-modulos-deploy-titulo"
          style="width:min(720px,100%);max-height:min(78vh,640px);overflow:auto;background:#fff;border-radius:16px;border:1px solid #cfd8df;box-shadow:0 18px 40px rgba(15,30,40,.22);padding:14px 16px 16px">
         <header style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px">
             <div>
                 <strong id="buriti-modulos-deploy-titulo" style="display:block;font-size:1rem">Módulos no servidor</strong>
-                <span id="buriti-modulos-deploy-sub" style="color:#5b6b76;font-size:.8rem">Versão do pacote · data do último deploy CI</span>
+                <span id="buriti-modulos-deploy-sub" style="color:#5b6b76;font-size:.8rem">Versão · data do deploy CI (comparar com o pacote no GitHub)</span>
             </div>
-            <button type="button" id="buriti-modulos-deploy-fechar" aria-label="Fechar"
-                    style="border:0;background:#f3f6f8;border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:1.1rem;line-height:1">&times;</button>
+            <div style="display:flex;gap:6px;align-items:center">
+                <button type="button" id="buriti-modulos-deploy-atualizar" title="Atualizar lista"
+                        style="border:0;background:#f3f6f8;border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:.95rem;line-height:1">
+                    <i class="fa fa-refresh" aria-hidden="true"></i>
+                </button>
+                <button type="button" id="buriti-modulos-deploy-fechar" aria-label="Fechar"
+                        style="border:0;background:#f3f6f8;border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:1.1rem;line-height:1">&times;</button>
+            </div>
         </header>
         <div id="buriti-modulos-deploy-corpo" style="display:grid;gap:8px">
             <p style="margin:0;color:#5b6b76;font-size:.85rem">Carregando…</p>
@@ -24,6 +30,7 @@
   var corpo = document.getElementById('buriti-modulos-deploy-corpo');
   var sub = document.getElementById('buriti-modulos-deploy-sub');
   var fechar = document.getElementById('buriti-modulos-deploy-fechar');
+  var atualizar = document.getElementById('buriti-modulos-deploy-atualizar');
   if (!btn || !painel || !corpo) return;
   var url = painel.getAttribute('data-url') || '';
   var carregado = false;
@@ -41,21 +48,23 @@
   }
 
   function carregar() {
+    carregado = false;
     corpo.innerHTML = '<p style="margin:0;color:#5b6b76;font-size:.85rem">Carregando…</p>';
     fetch(url, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function (data) {
         carregado = true;
         var mods = Array.isArray(data.modulos) ? data.modulos : [];
-        sub.textContent = (data.ativos || 0) + ' ativos · i-Educar ' + (data.app_version || '2.12');
+        var ativos = data.ativos || mods.filter(function (m) { return m.ativo; }).length;
+        sub.textContent = ativos + ' ativos · ' + mods.length + ' instalados · i-Educar ' + (data.app_version || '2.12');
         if (!mods.length) {
-          corpo.innerHTML = '<p style="margin:0;color:#5b6b76">Nenhum módulo encontrado.</p>';
+          corpo.innerHTML = '<p style="margin:0;color:#5b6b76">Nenhum módulo instalado encontrado.</p>';
           return;
         }
         corpo.innerHTML = mods.map(function (m) {
           var tom = m.ativo ? '#17663f' : '#b86e00';
           var fundo = m.ativo ? '#e5f6ec' : '#fff4e0';
-          var st = m.ativo ? 'Ativo' : (m.instalado ? 'Instalado (off)' : 'Ausente');
+          var st = m.ativo ? 'Ativo' : 'Instalado (off)';
           var deploy = m.deployed_at_br || 'Deploy ainda não registrado pelo CI';
           var sha = m.sha ? ' · ' + m.sha : '';
           return (
@@ -73,6 +82,7 @@
         }).join('');
       })
       .catch(function (e) {
+        carregado = false;
         corpo.innerHTML = '<p style="margin:0;color:#9b2c2c;font-size:.85rem">Falha ao carregar: ' + esc(e.message || e) + '</p>';
       });
   }
@@ -82,6 +92,7 @@
     abrir(fechado);
   });
   if (fechar) fechar.addEventListener('click', function () { abrir(false); });
+  if (atualizar) atualizar.addEventListener('click', function () { carregar(); });
   painel.addEventListener('click', function (ev) { if (ev.target === painel) abrir(false); });
   document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') abrir(false); });
 })();

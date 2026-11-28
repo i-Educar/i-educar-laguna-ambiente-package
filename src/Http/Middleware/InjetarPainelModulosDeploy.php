@@ -8,8 +8,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 /**
- * Injeta no rodapé suspenso do /painel o botão admin de módulos/versões/deploy.
- * Evita depender de patch no monorepo — sobe só com o CI do pacote Laguna.
+ * Fallback: injeta no rodapé suspenso do /painel o botão admin de módulos/versões/deploy
+ * quando a view do monorepo ainda não inclui o partial nativamente.
  */
 final class InjetarPainelModulosDeploy
 {
@@ -36,34 +36,44 @@ final class InjetarPainelModulosDeploy
             if ($html === '' || ! str_contains($html, 'rodape-operacao-lista')) {
                 return $response;
             }
-            if (str_contains($html, 'data-buriti-modulos-deploy')) {
+
+            $temBotao = str_contains($html, 'data-buriti-modulos-deploy');
+            $temPainel = str_contains($html, 'data-buriti-modulos-deploy-painel');
+            if ($temBotao && $temPainel) {
                 return $response;
             }
 
             $urlJson = url('/laguna-ambiente/modulos-deploy');
-            $botao = view('laguna-ambiente::partials.rodape-modulos-deploy-botao')->render();
-            $painel = view('laguna-ambiente::partials.rodape-modulos-deploy-painel', [
-                'urlJson' => $urlJson,
-            ])->render();
+            $novo = $html;
 
-            $novo = preg_replace(
-                '#(<ul\s+class="rodape-operacao-lista"[^>]*>)#i',
-                '$1'.$botao,
-                $html,
-                1,
-                $countUl
-            );
-            if (! is_string($novo) || $countUl < 1) {
-                return $response;
+            if (! $temBotao) {
+                $botao = view('laguna-ambiente::partials.rodape-modulos-deploy-botao')->render();
+                $comBotao = preg_replace(
+                    '#(<ul\s+class="rodape-operacao-lista"[^>]*>)#i',
+                    '$1'.$botao,
+                    $novo,
+                    1,
+                    $countUl
+                );
+                if (is_string($comBotao) && $countUl > 0) {
+                    $novo = $comBotao;
+                }
             }
 
-            if (str_contains($novo, '</body>')) {
-                $novo = str_replace('</body>', $painel.'</body>', $novo);
-            } else {
-                $novo .= $painel;
+            if (! $temPainel) {
+                $painel = view('laguna-ambiente::partials.rodape-modulos-deploy-painel', [
+                    'urlJson' => $urlJson,
+                ])->render();
+                if (str_contains($novo, '</body>')) {
+                    $novo = str_replace('</body>', $painel.'</body>', $novo);
+                } else {
+                    $novo .= $painel;
+                }
             }
 
-            $response->setContent($novo);
+            if ($novo !== $html) {
+                $response->setContent($novo);
+            }
         } catch (Throwable) {
             // best-effort
         }
