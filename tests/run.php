@@ -221,8 +221,9 @@ if (is_file($status58)) {
 }
 
 /* —— Config módulos (percentual / contato) —— */
-require_once dirname(__DIR__).'/src/Support/DiretivasModulos.php';
 require_once dirname(__DIR__).'/src/Support/SetorResponsavel.php';
+require_once dirname(__DIR__).'/src/Support/RedeApoio.php';
+require_once dirname(__DIR__).'/src/Support/DiretivasModulos.php';
 $setorDirs = \iEducar\Packages\BuritiLagunaAmbiente\Support\SetorResponsavel::diretivas();
 $assert(count($setorDirs) >= 5, 'setor tem diretivas de contato');
 $essenciais = array_values(array_filter($setorDirs, static fn ($d) => ! empty($d['essencial'])));

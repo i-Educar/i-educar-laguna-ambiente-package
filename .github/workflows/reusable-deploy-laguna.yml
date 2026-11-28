@@ -239,10 +239,15 @@ jobs:
           TAG="deploy/laguna/$(date -u +%Y%m%d-%H%M)-${SHA}"
           git config user.name "i-Educar Deploy Bot"
           git config user.email "deploy-bot@users.noreply.github.com"
-          git tag -a "$TAG" -m "Deploy Laguna ${{ inputs.package_repo }} @ ${SHA}"
-          if git push origin "$TAG"; then
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "::notice::Tag $TAG já existe — skip"
+            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git tag -a "$TAG" -m "Deploy Laguna ${{ inputs.package_repo }} @ ${SHA}" || true
+          if git push origin "$TAG" 2>/tmp/tag-push.err; then
             echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           else
-            echo "::warning::Não foi possível publicar a tag (permissão contents:write?)"
+            echo "::warning::Não foi possível publicar a tag: $(tr '\n' ' ' </tmp/tag-push.err)"
             echo "tag=" >> "$GITHUB_OUTPUT"
           fi
