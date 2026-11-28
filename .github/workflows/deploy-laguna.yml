@@ -7,11 +7,6 @@ on:
       - '**.md'
       - 'docs/laguna/deploys/REGISTRY.jsonl'
   workflow_dispatch:
-    inputs:
-      run_migrate:
-        description: Rodar migrate --force no servidor
-        type: boolean
-        default: false
 
 concurrency:
   group: deploy-laguna-${{ github.repository }}
@@ -22,13 +17,61 @@ permissions:
 
 jobs:
   deploy:
-    uses: ./.github/workflows/reusable-deploy-laguna.yml
-    with:
-      package_repo: i-educar-laguna-ambiente-package
-      server_path: packages/buriti/i-educar-laguna-ambiente-package
-      run_migrate: ${{ github.event.inputs.run_migrate == 'true' }}
-    secrets:
-      LAGUNA_SSH_HOST: ${{ secrets.LAGUNA_SSH_HOST }}
-      LAGUNA_SSH_USER: ${{ secrets.LAGUNA_SSH_USER }}
-      LAGUNA_SSH_KEY: ${{ secrets.LAGUNA_SSH_KEY }}
-      LAGUNA_APP_PATH: ${{ secrets.LAGUNA_APP_PATH }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: package
+          fetch-depth: 0
+
+      - name: Preparar SSH
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.LAGUNA_SSH_KEY }}" > ~/.ssh/id_laguna
+          chmod 600 ~/.ssh/id_laguna
+          ssh-keyscan -H "${{ secrets.LAGUNA_SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
+          printf '%s\n' \
+            'Host laguna' \
+            "  HostName ${{ secrets.LAGUNA_SSH_HOST }}" \
+            "  User ${{ secrets.LAGUNA_SSH_USER }}" \
+            '  IdentityFile ~/.ssh/id_laguna' \
+            '  IdentitiesOnly yes' \
+            '  StrictHostKeyChecking accept-new' > ~/.ssh/config
+          chmod 600 ~/.ssh/config
+
+      - name: Sync rsync
+        id: sync
+        run: |
+          set -euo pipefail
+          APP="${{ secrets.LAGUNA_APP_PATH }}"
+          REL="packages/buriti/i-educar-laguna-ambiente-package"
+          DEST="${APP}/${REL}"
+          SHA=$(git -C package rev-parse --short HEAD)
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          ssh laguna "mkdir -p '$DEST'"
+          rsync -az \
+            --exclude '.git/' \
+            --exclude 'vendor/' \
+            --exclude 'node_modules/' \
+            --exclude '.env' \
+            package/ "laguna:${DEST}/"
+          echo "Synced @ $SHA"
+
+      - name: Pos-deploy
+        run: |
+          set -euo pipefail
+          APP="${{ secrets.LAGUNA_APP_PATH }}"
+          ssh laguna "cd '$APP' && sudo -u www-data php artisan view:clear || true"
+
+      - name: Tag deploy
+        working-directory: package
+        env:
+          SHA: ${{ steps.sync.outputs.sha }}
+        run: |
+          set -euo pipefail
+          TAG="deploy/laguna/$(date -u +%Y%m%d-%H%M)-${SHA}"
+          git config user.name "i-Educar Deploy Bot"
+          git config user.email "deploy-bot@users.noreply.github.com"
+          git tag -a "$TAG" -m "Deploy Laguna @ ${SHA}"
+          git push origin "$TAG" || echo "tag push skip"
