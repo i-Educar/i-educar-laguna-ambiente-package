@@ -1,3 +1,4 @@
+# Template copiado para cada pacote Buriti (não editar nos pacotes — regenere pelo bootstrap).
 name: Deploy Laguna
 
 on:
@@ -5,7 +6,7 @@ on:
     branches: [main]
     paths-ignore:
       - '**.md'
-      - 'docs/laguna/deploys/REGISTRY.jsonl'
+      - 'docs/**'
   workflow_dispatch:
     inputs:
       run_migrate:
@@ -19,10 +20,9 @@ concurrency:
 
 jobs:
   deploy:
-    uses: ./.github/workflows/reusable-deploy-laguna.yml
+    uses: i-Educar/i-educar-laguna-ambiente-package/.github/workflows/reusable-deploy-laguna.yml@main
     with:
-      package_repo: i-educar-laguna-ambiente-package
-      server_path: packages/buriti/i-educar-laguna-ambiente-package
+      package_repo: ${{ github.event.repository.name }}
       run_migrate: ${{ github.event_name == 'workflow_dispatch' && inputs.run_migrate || false }}
     secrets:
       LAGUNA_SSH_HOST: ${{ secrets.LAGUNA_SSH_HOST }}
