@@ -28,7 +28,11 @@ final class LagunaSetupService
         if ($comSetupMunicipal) {
             $passos[] = $this->chamarSeExistir(
                 'ieducar:setup',
-                ['cidade-uf' => 'default-br', '--skip-auditoria' => true],
+                [
+                    'cidade-uf' => 'default-br',
+                    '--skip-auditoria' => true,
+                    '--force-production' => true,
+                ],
                 'Setup municipal padrão (ieducar:setup default-br)',
             );
         }
@@ -71,12 +75,12 @@ final class LagunaSetupService
         // Metadados Educacenso / idades de referência após turmas existirem.
         $passos[] = $this->chamarSeExistir(
             'ieducar:idades-referencia',
-            [],
+            ['--force-production' => true],
             'Idades de referência + etapa Educacenso nas turmas',
         );
         $passos[] = $this->chamarSeExistir(
             'ieducar:cadastro-metadados',
-            ['--sem-infantil' => true],
+            ['--sem-infantil' => true, '--force-production' => true],
             'Metadados escolares (Educacenso / vínculos)',
         );
 

@@ -206,11 +206,16 @@ final class LagunaPovoarCidadeService
             if ($i === 0) {
                 $modelo = LegacySchool::query()->where('ativo', 1)->orderBy('cod_escola')->first();
                 if ($modelo) {
+                    $cnpjLaguna = sprintf('42%012d', 9102000 + $i);
                     LegacyPerson::query()->whereKey($modelo->ref_idpes)->update([
                         'nome' => $def['nome'],
                         'email' => strtolower($def['sigla']).'@sme.laguna.sc.gov.br',
                     ]);
-                    LegacyOrganization::query()->whereKey($modelo->ref_idpes)->update(['fantasia' => $def['nome']]);
+                    // Troca o CNPJ da escola modelo (990…191) para não bloquear reexecução do ieducar:setup.
+                    LegacyOrganization::query()->whereKey($modelo->ref_idpes)->update([
+                        'fantasia' => $def['nome'],
+                        'cnpj' => $cnpjLaguna,
+                    ]);
                     $modelo->update([
                         'sigla' => $def['sigla'],
                         'zona_localizacao' => $def['zona'],
