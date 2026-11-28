@@ -203,6 +203,28 @@
         document.body.appendChild(el);
         return el;
     }
+    function garantirBarraFecharLateral() {
+        var lat = lateralEl();
+        if (!lat) return null;
+        var bar = lat.querySelector('[data-buriti-lateral-fechar-bar]');
+        if (bar) return bar;
+        bar = document.createElement('div');
+        bar.className = 'buriti-lateral-fechar-bar';
+        bar.setAttribute('data-buriti-lateral-fechar-bar', '1');
+        bar.innerHTML =
+            '<strong>Menu</strong>'
+            + '<button type="button" data-buriti-lateral-fechar title="Fechar menu" aria-label="Fechar menu">'
+            + '<i class="fa fa-times" aria-hidden="true"></i></button>';
+        var primeiro = lat.firstChild;
+        /* Mantém brasão/marca no topo visual; barra de fechar acima deles */
+        lat.insertBefore(bar, primeiro);
+        bar.querySelector('[data-buriti-lateral-fechar]').addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            aplicarLateralAberta(false);
+        });
+        return bar;
+    }
     function aplicarLateralAberta(on) {
         on = !!on;
         document.documentElement.classList.toggle('buriti-lateral-aberta', on);
@@ -210,6 +232,9 @@
         var app = document.querySelector('.app');
         if (app) app.classList.toggle('buriti-lateral-aberta', on);
         garantirBackdropLateral();
+        garantirBarraFecharLateral();
+        document.body.style.overflow = on ? 'hidden' : '';
+        document.documentElement.style.overflow = on ? 'hidden' : '';
         document.querySelectorAll('.topo-buriti [data-buriti-lateral-toggle]').forEach(function (btn) {
             btn.setAttribute('aria-pressed', on ? 'true' : 'false');
             btn.title = on ? 'Fechar menu' : 'Abrir menu';
@@ -224,6 +249,7 @@
                 document.documentElement.classList.remove('buriti-lateral-icones');
                 document.body.classList.remove('buriti-lateral-icones');
                 if (app) app.classList.remove('buriti-lateral-icones');
+                try { lat.scrollTop = 0; } catch (err) {}
             }
         }
     }

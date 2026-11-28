@@ -403,6 +403,9 @@
     footer.rodape-coop-buriti a:hover { text-decoration: underline; color: var(--tinta, #16384a); }
     footer.rodape-coop-buriti .sep { opacity: .45; margin: 0 4px; }
     footer.rodape-coop-buriti .versoes { opacity: .9; }
+    /* Barra de fechar só no menu mobile em tela cheia */
+    .buriti-lateral-fechar-bar { display: none; }
+
     /* —— Shell SME: largura útil + mobile (todos os módulos) —— */
     .app { width: 100%; }
     .miolo { min-width: 0; width: 100%; }
@@ -440,35 +443,115 @@
         }
     }
     @media (max-width: 860px) {
-        /* Lateral vira gaveta; sanduíche abre/fecha */
-        .app .lateral {
+        /* Sanduíche: menu em tela cheia no celular */
+        .app .lateral,
+        .app > .lateral,
+        aside.lateral {
             display: flex !important;
             flex-direction: column;
             position: fixed !important;
-            top: 0; left: 0; bottom: 0;
-            z-index: 60;
-            width: min(280px, 88vw) !important;
-            max-width: 280px;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 90;
+            width: 100% !important;
+            max-width: none !important;
+            min-width: 0 !important;
+            height: 100% !important;
+            height: 100dvh !important;
+            min-height: 100% !important;
+            min-height: 100dvh !important;
+            margin: 0 !important;
+            flex: none !important;
             transform: translateX(-105%);
-            transition: transform .22s ease;
-            box-shadow: 8px 0 28px rgba(14, 42, 58, .18);
+            transition: transform .24s ease;
+            box-shadow: none;
+            overflow-x: hidden;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            padding-left: env(safe-area-inset-left, 0px);
+            padding-right: env(safe-area-inset-right, 0px);
+            overscroll-behavior: contain;
         }
         html.buriti-lateral-aberta .app .lateral,
+        html.buriti-lateral-aberta .app > .lateral,
+        html.buriti-lateral-aberta aside.lateral,
         body.buriti-lateral-aberta .app .lateral,
+        body.buriti-lateral-aberta .app > .lateral,
+        body.buriti-lateral-aberta aside.lateral,
         .app.buriti-lateral-aberta .lateral {
             transform: translateX(0);
         }
+        html.buriti-lateral-aberta,
+        body.buriti-lateral-aberta {
+            overflow: hidden !important;
+            touch-action: none;
+        }
         .buriti-lateral-backdrop {
             display: none;
-            position: fixed; inset: 0; z-index: 55;
-            background: rgba(14, 42, 58, .42);
+            position: fixed; inset: 0; z-index: 85;
+            width: 100%; height: 100%;
+            height: 100dvh;
+            background: rgba(8, 16, 24, .55);
             border: 0; padding: 0; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
         }
         html.buriti-lateral-aberta .buriti-lateral-backdrop,
         body.buriti-lateral-aberta .buriti-lateral-backdrop {
             display: block;
+        }
+        .buriti-lateral-fechar-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            flex: none;
+            min-height: 56px;
+            padding: 10px 14px;
+            margin: 0;
+            background: color-mix(in srgb, #0a1218 72%, var(--cor, #1a5f9e));
+            border-bottom: 1px solid rgba(255,255,255,.1);
+            color: #fff;
+        }
+        .buriti-lateral-fechar-bar strong {
+            font-size: .92rem;
+            font-weight: 800;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+        }
+        .buriti-lateral-fechar-bar [data-buriti-lateral-fechar] {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border: 1px solid rgba(255,255,255,.22);
+            border-radius: 12px;
+            background: rgba(255,255,255,.1);
+            color: #fff;
+            font-size: 1.15rem;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .buriti-lateral-fechar-bar [data-buriti-lateral-fechar]:hover,
+        .buriti-lateral-fechar-bar [data-buriti-lateral-fechar]:active {
+            background: rgba(255,255,255,.2);
+        }
+        .app .lateral .modulo a,
+        .app .lateral nav a,
+        aside.lateral .modulo a,
+        aside.lateral nav a {
+            min-height: 48px;
+            padding: 12px 14px !important;
+            font-size: 1rem;
+            border-radius: 12px;
+        }
+        .app .lateral .modulo,
+        aside.lateral .modulo {
+            padding: 8px 12px !important;
         }
         .miolo > main { padding: 12px 12px 20px !important; }
         .topo.topo-buriti, .topo-buriti {
