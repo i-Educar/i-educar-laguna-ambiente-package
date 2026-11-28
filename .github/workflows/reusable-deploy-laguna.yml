@@ -1,0 +1,230 @@
+# Deploy reutilizável → VPS Laguna (Modelópolis).
+# Chamado pelos pacotes da org i-Educar após push em main.
+#
+# Secrets necessários (org ou repo, via secrets: inherit):
+#   LAGUNA_SSH_HOST   — ex.: 177.39.18.192
+#   LAGUNA_SSH_USER   — ex.: debian
+#   LAGUNA_SSH_KEY    — chave privada OpenSSH (ed25519/rsa)
+#   LAGUNA_APP_PATH   — ex.: /var/www/ieducar
+#   IEDUCAR_DEPLOY_TOKEN (opcional) — PAT com contents:write no laguna-ambiente
+#                                     para registrar o deploy no REGISTRY.jsonl
+name: Reusable · Deploy Laguna
+
+on:
+  workflow_call:
+    inputs:
+      package_repo:
+        description: Nome do repositório (ex. i-educar-assinatura-digital-package)
+        required: true
+        type: string
+      server_path:
+        description: Caminho relativo no app (ex. packages/buriti/...)
+        required: false
+        type: string
+        default: ''
+      ref:
+        description: SHA/ref a publicar (vazio = commit do caller)
+        required: false
+        type: string
+        default: ''
+      run_migrate:
+        description: Rodar php artisan migrate --force após o sync
+        required: false
+        type: boolean
+        default: false
+      environment:
+        description: GitHub Environment
+        required: false
+        type: string
+        default: laguna-production
+    secrets:
+      LAGUNA_SSH_HOST:
+        required: true
+      LAGUNA_SSH_USER:
+        required: true
+      LAGUNA_SSH_KEY:
+        required: true
+      LAGUNA_APP_PATH:
+        required: true
+      IEDUCAR_DEPLOY_TOKEN:
+        required: false
+
+permissions:
+  contents: write
+  deployments: write
+  actions: read
+
+jobs:
+  deploy:
+    name: Deploy ${{ inputs.package_repo }} → Laguna
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+      url: https://ieducar-laguna.librecode.coop
+    steps:
+      - name: Checkout pacote
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref != '' && inputs.ref || github.sha }}
+          fetch-depth: 0
+          path: package
+
+      - name: Resolver caminho no servidor
+        id: path
+        working-directory: package
+        run: |
+          set -euo pipefail
+          REPO="${{ inputs.package_repo }}"
+          EXPLICITO="${{ inputs.server_path }}"
+          if [ -n "$EXPLICITO" ]; then
+            echo "rel=$EXPLICITO" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Baixa o mapa canônico do hub (ambiente)
+          curl -fsSL \
+            "https://raw.githubusercontent.com/i-Educar/i-educar-laguna-ambiente-package/main/docs/laguna/deploys/paths.map.json" \
+            -o /tmp/paths.map.json || echo '{}' > /tmp/paths.map.json
+          REL=$(python3 - <<'PY'
+import json, os
+repo = os.environ["REPO"]
+with open("/tmp/paths.map.json") as f:
+    m = json.load(f)
+rel = m.get(repo, "")
+print(rel)
+PY
+)
+          if [ -z "$REL" ]; then
+            # fallback: packages/buriti/<repo> (transporte tem nome de pasta diferente)
+            REL="packages/buriti/${REPO}"
+            echo "::warning::Repo $REPO ausente do paths.map.json — usando $REL"
+          fi
+          echo "rel=$REL" >> "$GITHUB_OUTPUT"
+        env:
+          REPO: ${{ inputs.package_repo }}
+
+      - name: Preparar SSH
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.LAGUNA_SSH_KEY }}" > ~/.ssh/id_laguna
+          chmod 600 ~/.ssh/id_laguna
+          ssh-keyscan -H "${{ secrets.LAGUNA_SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
+          cat > ~/.ssh/config <<EOF
+          Host laguna
+            HostName ${{ secrets.LAGUNA_SSH_HOST }}
+            User ${{ secrets.LAGUNA_SSH_USER }}
+            IdentityFile ~/.ssh/id_laguna
+            IdentitiesOnly yes
+            StrictHostKeyChecking accept-new
+          EOF
+          chmod 600 ~/.ssh/config
+
+      - name: Sync rsync → servidor
+        id: sync
+        run: |
+          set -euo pipefail
+          APP="${{ secrets.LAGUNA_APP_PATH }}"
+          REL="${{ steps.path.outputs.rel }}"
+          DEST="${APP}/${REL}"
+          SHA=$(git -C package rev-parse --short HEAD)
+          FULL=$(git -C package rev-parse HEAD)
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "full=$FULL" >> "$GITHUB_OUTPUT"
+          echo "dest=$DEST" >> "$GITHUB_OUTPUT"
+          ssh laguna "mkdir -p '$DEST'"
+          rsync -az --delete \
+            --exclude '.git/' \
+            --exclude 'vendor/' \
+            --exclude 'node_modules/' \
+            --exclude '.env' \
+            --exclude 'storage/' \
+            --exclude 'tmp/' \
+            package/ "laguna:${DEST}/"
+          echo "Synced $REL @ $SHA → $DEST"
+
+      - name: Pós-deploy (artisan)
+        run: |
+          set -euo pipefail
+          APP="${{ secrets.LAGUNA_APP_PATH }}"
+          ssh laguna "bash -s" <<EOF
+          set -euo pipefail
+          cd '$APP'
+          if id www-data >/dev/null 2>&1; then
+            sudo -u www-data php artisan view:clear || true
+            sudo -u www-data php artisan package:discover --ansi || true
+            if [ '${{ inputs.run_migrate }}' = 'true' ]; then
+              sudo -u www-data php artisan migrate --force --no-interaction || true
+            fi
+          else
+            php artisan view:clear || true
+          fi
+          EOF
+
+      - name: Tag de deploy no pacote
+        id: tag
+        working-directory: package
+        env:
+          SHA: ${{ steps.sync.outputs.sha }}
+        run: |
+          set -euo pipefail
+          TAG="deploy/laguna/$(date -u +%Y%m%d-%H%M)-${SHA}"
+          git config user.name "i-Educar Deploy Bot"
+          git config user.email "deploy-bot@users.noreply.github.com"
+          git tag -a "$TAG" -m "Deploy Laguna ${{ inputs.package_repo }} @ ${SHA}"
+          if git push origin "$TAG"; then
+            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Não foi possível publicar a tag (permissão contents:write?)"
+            echo "tag=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Registrar no hub (REGISTRY.jsonl)
+        continue-on-error: true
+        env:
+          TOKEN: ${{ secrets.IEDUCAR_DEPLOY_TOKEN }}
+          REPO: ${{ inputs.package_repo }}
+          FULL: ${{ steps.sync.outputs.full }}
+          SHA: ${{ steps.sync.outputs.sha }}
+          REL: ${{ steps.path.outputs.rel }}
+          ACTOR: ${{ github.actor }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if [ -z "${TOKEN:-}" ]; then
+            echo "IEDUCAR_DEPLOY_TOKEN ausente — registry central ignorado (tags no pacote ainda valem)."
+            exit 0
+          fi
+          git clone --depth 1 \
+            "https://x-access-token:${TOKEN}@github.com/i-Educar/i-educar-laguna-ambiente-package.git" \
+            hub
+          cd hub
+          mkdir -p docs/laguna/deploys
+          touch docs/laguna/deploys/REGISTRY.jsonl
+          python3 - <<'PY'
+          import json, os, datetime
+          line = {
+            "at": datetime.datetime.utcnow().replace(microsecond=0).isoformat()+"Z",
+            "repo": os.environ["REPO"],
+            "sha": os.environ["FULL"],
+            "sha_short": os.environ["SHA"],
+            "path": os.environ["REL"],
+            "actor": os.environ.get("ACTOR", ""),
+            "run_id": os.environ.get("RUN_ID", ""),
+            "run_url": os.environ.get("RUN_URL", ""),
+            "tag": os.environ.get("TAG", ""),
+            "host": "ieducar-laguna.librecode.coop",
+          }
+          with open("docs/laguna/deploys/REGISTRY.jsonl", "a") as f:
+              f.write(json.dumps(line, ensure_ascii=False) + "\n")
+          PY
+          git config user.name "i-Educar Deploy Bot"
+          git config user.email "deploy-bot@users.noreply.github.com"
+          git add docs/laguna/deploys/REGISTRY.jsonl
+          if git diff --cached --quiet; then
+            echo "Sem mudanças no registry"
+          else
+            git commit -m "deploy(laguna): ${REPO} @ ${SHA}"
+            git push origin HEAD:main
+          fi
