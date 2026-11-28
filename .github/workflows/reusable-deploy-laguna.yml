@@ -32,11 +32,6 @@ on:
         required: false
         type: boolean
         default: false
-      environment:
-        description: GitHub Environment
-        required: false
-        type: string
-        default: laguna-production
     secrets:
       LAGUNA_SSH_HOST:
         required: true
@@ -58,9 +53,6 @@ jobs:
   deploy:
     name: Deploy ${{ inputs.package_repo }} → Laguna
     runs-on: ubuntu-latest
-    environment:
-      name: ${{ inputs.environment }}
-      url: https://ieducar-laguna.librecode.coop
     steps:
       - name: Checkout pacote
         uses: actions/checkout@v4
