@@ -1,61 +1,54 @@
-# Ambiente Laguna (admin)
+# Ambiente de demonstração e administração
 
-Pacote Buriti para o i-Educar **2.12**: auditoria dos módulos PE-77/2026 e setup que povoa a base para teste completo.
+Ferramentas administrativas para auditar módulos instalados, povoar base de ensaio e configurar identidade/tema do ambiente.
 
 Composer: `buriti/i-educar-laguna-ambiente-package`
 
-| Token | Valor |
+## Para que serve
+
+Destinado a administradores: checklist de saúde dos módulos, setup de dados de teste, simulações, tema visual e política de senha — sem ser módulo pedagógico da rede.
+
+## Desenho de funções
+
+| Função | Entrega |
 | --- | --- |
-| Cor | `#16384a` |
-| Ícone | `fa-heartbeat` |
-| Processos | `8899xx` |
-| Menu `order` | `99` (ferramenta admin) |
-| Acesso web | **somente** `User::isAdmin()` |
+| Auditoria de módulos | Check de prontidão e testes automatizados por módulo |
+| Setup de ensaio | Povoamento controlado da base para demonstração |
+| Simulação | Cenários de uso para validar fluxos |
+| Tema / identidade | Ajustes visuais do ambiente |
+| Usuários de teste | Apoio a política de senha e contas de ensaio |
+| Configuração de módulos | `/configuracoes/modulos` |
+| CI/CD de publicação | Workflows reutilizáveis de deploy (Actions) |
+
+## Quem usa
+
+- Administradores do sistema
+- Equipe de implantação / QA
+
+## Integrações
+
+- Todos os pacotes Buriti (catálogo e checks)
+- Núcleo i-Educar
 
 ## Compatibilidade
 
 | Produto | Versão |
 | --- | --- |
-| **i-Educar** | **2.12.x** (min. 2.12.0) |
-| **i-Diário** | Portabilis i-Diário (espelho Laguna) via API/SSO do core |
-| Pacote | `0.2.0` |
+| **i-Educar** | **2.12.x** |
+| **i-Diário** | Portabilis i-Diário (API / SSO do núcleo) |
+| Pacote | `0.3.0` |
 
-Declarado em `composer.json` → `extra.ieducar` e `extra.idiario`.
+Declarado em `composer.json` → `extra.ieducar` / `extra.idiario`.
 
-## Comandos
+## Documentação
 
-```bash
-php artisan laguna:check              # audita módulos / schemas / menus / cmds
-php artisan laguna:setup              # povoa setup + demos + simulação
-php artisan laguna:ensaiar            # check → setup → recheck
-php artisan laguna:povoar-cidade      # cidade média (escolas/turmas/atores)
-php artisan laguna:simular-pessoas    # 20 pessoas multi-módulo
-php artisan laguna:idiario            # vínculos i-Diário
-php artisan laguna:otimizar           # docker/DB/caches Laguna
-php artisan laguna:setup --skip-municipal --skip-matriculas --skip-povoar
-```
+| Documento | Uso |
+| --- | --- |
+| [`EPIC.md`](./EPIC.md) | Escopo de produto, aceite e critérios |
+| [`ROADMAP.md`](./ROADMAP.md) | Fases e entregas |
+| [`TODO.md`](./TODO.md) | Backlog operacional |
+| [`docs/`](./docs/) | Operação do ambiente e publicação contínua (GitHub Actions) |
 
-Pipeline detalhado: `packages/buriti/docs/laguna/CARGA-DADOS-AMBIENTE.md` · solução: `…/SOLUCAO-COMPLETA.md` · install: `…/INSTALACAO.md`.
+---
 
-## UI admin
-
-`/laguna-ambiente` · `/check` · `/setup` · `/tema` · `/usuarios` — middleware `ExigeAdmin` (403 se não for admin).
-
-### Suspender usuários
-
-**Ambiente Laguna → Suspender usuários** (`/laguna-ambiente/usuarios`): select múltiplo + desativar.
-Revoga tokens Sanctum, bloqueia login web/apps e registra ator na auditoria (`apps_api.evento_governanca`).
-
-### Tema visual Buriti (onda 1)
-
-Caminho na interface: **Ambiente Laguna → Tema visual** (`/laguna-ambiente/tema`).
-
-Alternativa: `BURITI_TEMA_ATIVO=true` no `.env` (o toggle da UI grava `laguna-ambiente.tema.ativo` em settings e prevalece).
-
-## O que o setup faz
-
-Ver `LagunaSetupService` / `CARGA-DADOS-AMBIENTE.md`: setup municipal → migrate → configs → povoar cidade (+ cenários) → metadados Educacenso → demos → i-Diário → simulação 20 pessoas.
-
-## Instalação no monorepo
-
-Path repository + provider em `config/app.php` + liberar em `tenants.local.php`. Ver `docs/USO.md`.
+Licença: **GPL-2.0-or-later** · Organização [i-Educar](https://github.com/i-Educar)
