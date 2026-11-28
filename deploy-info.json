@@ -1,9 +1,9 @@
 {
   "package": "i-educar-laguna-ambiente-package",
   "composer": "buriti/i-educar-laguna-ambiente-package",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "sha": "pending",
   "full_sha": "pending",
-  "deployed_at": "2026-11-28T16:21:15Z",
+  "deployed_at": "2026-11-28T16:24:34Z",
   "source": "github-actions"
 }
