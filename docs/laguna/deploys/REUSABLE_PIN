@@ -1,3 +1,3 @@
 # Pin imutável do reusable Deploy Laguna.
 # Callers NÃO devem usar @main — só SHA completo (40 hex).
-sha=f86aed02af28574dea57be748214618f053cd669
+sha=584de1f414a7004992db310307de707cc30c2b21
