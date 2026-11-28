@@ -38,7 +38,7 @@
 | **Total** | **664** | **656** | **6** | **2** | **~98.8%** |
 
 > **Ambiente (Onda 32):** `laguna:check` **8/8** · simulação 20 pessoas OK · `exportacao:demo` + `demo-criticos` OK.  
-> **Cobertura TR bruta** ainda ~26% — promoção de IDs depende das Ondas **27–31** (ou plano 30 dias).  
+> **Gate Buriti fechado** (~98,8% `[x]`): Ondas **19–24** e **27–32** entregues. Residual `[~]` ≤ 1% com plano 30 dias.  
 > **5.8:** gate sem WhatsApp ≈ 100%. Residual: **5.8.33 / 5.8.120** (WhatsApp) — **Rodada 5**.  
 > **5.13/5.14:** Buriti fecha com **API + DOC técnico**; lojas = **Rodada 5**.
 

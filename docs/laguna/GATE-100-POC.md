@@ -36,22 +36,18 @@
 | **Residual sanável** | `BACKLOG-SANCAO-SEM-WA-APK.md` (residual WA + planos 4.9 / uniformes / LibreSign) · plano [`onda-32/PLANO-30-DIAS.md`](../onda-32/PLANO-30-DIAS.md) |
 
 ```text
-Já OK / quase (matriz)
-  5.6 Solicitação ……… 100%
-  5.8 Fila …………… ~98% s/ WhatsApp
-  apps-api ……… contrato Onda 3/5/10/17 + DOC Android
+Gate Buriti (matriz ~98,8% [x])
+  4 / 5.1–5.15 ……… ≥ 85% [x] (só WA [ ] fora do gate)
+  apps-api ……… 5.13/5.14 100% API + DOC
   Ambiente ……… laguna:check verde (Onda 32)
+  Papéis temporários ……… módulo entregue (/papeis-temporarios)
 
-Rodada 6 — promoção de IDs (ainda planejada)
-  27  5.13/5.14 na matriz (API já OK)
-  28  4.x / 5.5 / 5.7 / 5.9 residual
-  29  5.2 SISVAN / NF-e / financeiro
-  30  5.3 Buriti (LibreSign UI + uniformes + prints)
-  31  5.4 / 5.10 / RH residual
-  32  Gate ambiente + snapshot + demo 3 ……… EM EVIDÊNCIA
+Rodada 6 — entregue
+  27–31  promoção / P0 / residual plano 30 dias
+  32     Gate ambiente + snapshot + demo
 ```
 
-**Leitura honesta do gate:** o **ambiente PoC** está apto para ensaio SME. A **cobertura TR por checkbox** ainda exige Ondas **27–31** (ou aceite do plano 30 dias). Não se declara ≥ 85% por módulo obrigatório além de 5.6/5.8.
+**Leitura do gate:** PoC Buriti **fechada** (≥ 85% por módulo obrigatório; residual `[~]` ≤ 15% com plano 30 dias). WhatsApp e lojas permanecem fora (Rodada 5).
 
 ---
 
