@@ -51,6 +51,9 @@ for repo, rel in sorted(mapping.items()):
         check=True,
     )
     if do_push:
-        subprocess.run(["git", "push", "origin", "HEAD"], cwd=local, check=True)
-        print(f"  pushed")
+        p = subprocess.run(["git", "push", "origin", "HEAD"], cwd=local)
+        if p.returncode == 0:
+            print(f"  pushed")
+        else:
+            print(f"  push FALHOU (rc={p.returncode}) — commit local ok")
 PY
