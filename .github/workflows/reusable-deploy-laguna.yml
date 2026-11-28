@@ -268,6 +268,8 @@ jobs:
           echo "full=$FULL" >> "$GITHUB_OUTPUT"
           echo "dest=$DEST" >> "$GITHUB_OUTPUT"
           ssh laguna "mkdir -p '$DEST'"
+          # Path lixo de rsync antigo (www-data) — limpar antes do --delete
+          ssh laguna "sudo rm -rf '$DEST/resources/views/home' 2>/dev/null || true"
           rsync -az --delete \
             --no-perms --no-owner --no-group --omit-dir-times \
             --exclude '.git/' \
@@ -303,7 +305,12 @@ jobs:
           # Lixo acidental de rsync antigo (path absoluto sob views)
           if [ -d "\${REL}/resources/views/home" ]; then
             echo "::warning::Removendo path acidental \${REL}/resources/views/home"
-            rm -rf "\${REL}/resources/views/home" || true
+            sudo rm -rf "\${REL}/resources/views/home" || true
+          fi
+
+          # storage do pacote precisa ser gravável pelo PHP (www-data) nos testes pós-deploy
+          if [ -d "\${REL}/storage" ]; then
+            sudo chown -R www-data:www-data "\${REL}/storage" 2>/dev/null || true
           fi
 
           php_bin artisan package:discover --ansi || true
@@ -422,27 +429,36 @@ jobs:
           REL='$REL'
           MANIFEST_DIR="\$APP/storage/app/buriti"
           INFO="\$APP/\$REL/deploy-info.json"
-          mkdir -p "\$MANIFEST_DIR" "\$(dirname "\$INFO")"
-          cp /tmp/module-deploy-info.json "\$INFO"
-          APP="\$APP" REL="\$REL" python3 - <<'PY'
-          import json, os, pathlib
+          sudo mkdir -p "\$MANIFEST_DIR" "\$(dirname "\$INFO")"
+          sudo cp /tmp/module-deploy-info.json "\$INFO"
+          # flock evita corrida entre deploys concorrentes no mesmo JSON
+          APP="\$APP" REL="\$REL" sudo -E python3 - <<'PY'
+          import json, os, pathlib, fcntl
           app = pathlib.Path(os.environ["APP"])
           rel = os.environ["REL"]
           info = json.loads(pathlib.Path("/tmp/module-deploy-info.json").read_text(encoding="utf-8"))
           manifest_path = app / "storage/app/buriti/modules-deploy.json"
-          data = {"modules": {}, "updated_at": None}
-          if manifest_path.is_file():
-              try:
-                  data = json.loads(manifest_path.read_text(encoding="utf-8"))
-              except Exception:
-                  pass
-          if not isinstance(data.get("modules"), dict):
-              data["modules"] = {}
-          for key in filter(None, [info.get("composer"), info.get("package"), info.get("path"), pathlib.Path(rel).name]):
-              data["modules"][str(key)] = info
-          data["updated_at"] = info.get("deployed_at")
           manifest_path.parent.mkdir(parents=True, exist_ok=True)
-          manifest_path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+          with open(manifest_path, "a+", encoding="utf-8") as fh:
+              fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
+              fh.seek(0)
+              raw = fh.read()
+              data = {"modules": {}, "updated_at": None}
+              if raw.strip():
+                  try:
+                      data = json.loads(raw)
+                  except Exception:
+                      pass
+              if not isinstance(data.get("modules"), dict):
+                  data["modules"] = {}
+              for key in filter(None, [info.get("composer"), info.get("package"), info.get("path"), pathlib.Path(rel).name]):
+                  data["modules"][str(key)] = info
+              data["updated_at"] = info.get("deployed_at")
+              fh.seek(0)
+              fh.truncate()
+              fh.write(json.dumps(data, indent=2) + "\n")
+              fh.flush()
+              os.fsync(fh.fileno())
           print("ok", manifest_path)
           PY
           if id www-data >/dev/null 2>&1; then
