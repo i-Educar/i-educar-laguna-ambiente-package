@@ -66,22 +66,22 @@ final class PermissaoMatriz
                 'cod' => 3,
                 'nome' => 'Diretor escolar',
                 'nivel' => self::NIVEL_INSTITUCIONAL,
-                'desc' => 'Gestão da unidade: solicitação, atendimento, horários, biblioteca e visão de busca ativa',
-                'modulos' => ['solicitacao', 'atendimento', 'horario', 'biblioteca', 'busca-ativa', 'alimentacao', 'eventos'],
+                'desc' => 'Gestão da unidade: solicitação, atendimento, horários, biblioteca, relatórios, i-Diário e visão de busca ativa',
+                'modulos' => ['solicitacao', 'atendimento', 'horario', 'biblioteca', 'busca-ativa', 'alimentacao', 'eventos', 'relatorios', 'idiario'],
             ],
             [
                 'cod' => 4,
                 'nome' => 'Coordenador pedagógico',
                 'nivel' => self::NIVEL_INSTITUCIONAL,
-                'desc' => 'Pedagógico escolar: horários, eventos/formação, atendimento e busca ativa',
-                'modulos' => ['horario', 'eventos', 'atendimento', 'busca-ativa'],
+                'desc' => 'Pedagógico escolar: horários, eventos/formação, atendimento, busca ativa, relatórios e i-Diário',
+                'modulos' => ['horario', 'eventos', 'atendimento', 'busca-ativa', 'relatorios', 'idiario'],
             ],
             [
                 'cod' => 5,
                 'nome' => 'Professor',
                 'nivel' => self::NIVEL_ESCOLA,
-                'desc' => 'Docente — consulta de horários, eventos e biblioteca (sem cadastrar)',
-                'modulos' => ['horario', 'eventos', 'biblioteca'],
+                'desc' => 'Docente — horários, eventos, biblioteca, relatórios (consulta) e i-Diário',
+                'modulos' => ['horario', 'eventos', 'biblioteca', 'relatorios', 'idiario'],
             ],
             [
                 'cod' => 6,
@@ -192,6 +192,8 @@ final class PermissaoMatriz
             'apps-api' => self::faixa(882100, 882199),
             'busca-ativa' => self::faixa(882200, 882299),
             'servidor' => self::faixa(883000, 883099),
+            'relatorios' => self::faixa(884000, 884099),
+            'idiario' => [Processos::IDIARIO],
             'vagas' => [56, 5655, 5656],
             'censo' => [9998848],
             'laguna-ambiente' => [
@@ -308,8 +310,9 @@ final class PermissaoMatriz
             ->where('active', true)
             ->whereNotNull('process')
             ->when($governados !== [], static fn ($q) => $q->whereNotIn('id', $governados))
-            // Configurações / tools ficam só com admin.
+            // Configurações / tools / faixas Buriti (já cobertas por menusGovernados + sincronizar).
             ->whereNotIn('process', [25, 3000, 999873, 999910])
+            ->whereNotBetween('process', [884000, 884199])
             ->pluck('id');
 
         $n = 0;
@@ -449,6 +452,7 @@ final class PermissaoMatriz
                 $q->whereIn('process', $processos)
                     ->orWhere(function ($r): void {
                         $r->whereBetween('process', [880100, 883099])
+                            ->orWhereBetween('process', [884000, 884199])
                             ->orWhereBetween('process', [889900, 889999]);
                     });
             })

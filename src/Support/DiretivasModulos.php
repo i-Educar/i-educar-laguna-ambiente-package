@@ -146,6 +146,34 @@ final class DiretivasModulos
                 'bloqueavel' => true,
                 'prefixos_rota' => ['transporte-escolar'],
             ],
+            'relatorios' => [
+                'guia' => 'Relatórios e documentos escolares (PDF/Excel). Restrinja a perfis pedagógicos e SME.',
+                'diretivas' => [
+                    self::ativo(),
+                ],
+                'impactos_desativar' => [
+                    'Catálogo /relatorios-avancados deixa de abrir para a rede.',
+                ],
+                'fluxos_comprometidos' => [
+                    'Emissão de boletins, atas, fichas e indicadores',
+                ],
+                'bloqueavel' => true,
+                'prefixos_rota' => ['relatorios-avancados'],
+            ],
+            'idiario' => [
+                'guia' => 'Atalho e SSO para o i-Diário. Sem permissão o card fica desativado e /idiario/entrar é bloqueado.',
+                'diretivas' => [
+                    self::ativo(),
+                ],
+                'impactos_desativar' => [
+                    'Entrada SSO e atalho do painel deixam de operar.',
+                ],
+                'fluxos_comprometidos' => [
+                    'Frequência e lançamentos no i-Diário',
+                ],
+                'bloqueavel' => true,
+                'prefixos_rota' => ['idiario'],
+            ],
             'alimentacao' => [
                 'guia' => 'Ajuste lanches/jantar, o responsável técnico (CRN) e o setor da SME. O cardápio e o botão «i» de informes usam estes dados.',
                 'diretivas' => array_merge([

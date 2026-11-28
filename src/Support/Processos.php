@@ -23,6 +23,12 @@ final class Processos
     /** Verificar instalação / auditoria de módulos. */
     public const CHECK = 889914;
 
+    /** Relatórios avançados (Serventec) — faixa 8840xx. */
+    public const RELATORIOS = 884000;
+
+    /** Portal i-Diário (SSO / atalho do painel). */
+    public const IDIARIO = 884100;
+
     /** @return array<int, string> */
     public static function titulos(): array
     {
@@ -34,6 +40,8 @@ final class Processos
             self::TEMA => 'Skins da escola',
             self::USUARIOS => 'Suspender usuários',
             self::CHECK => 'Verificar módulos',
+            self::RELATORIOS => 'Relatórios avançados',
+            self::IDIARIO => 'i-Diário',
         ];
     }
 
