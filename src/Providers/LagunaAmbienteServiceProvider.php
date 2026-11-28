@@ -10,6 +10,7 @@ use iEducar\Packages\BuritiLagunaAmbiente\Console\LagunaOtimizarCommand;
 use iEducar\Packages\BuritiLagunaAmbiente\Console\LagunaPovoarCidadeCommand;
 use iEducar\Packages\BuritiLagunaAmbiente\Console\LagunaQuadroPedagogicoCommand;
 use iEducar\Packages\BuritiLagunaAmbiente\Console\LagunaSetupCommand;
+use iEducar\Packages\BuritiLagunaAmbiente\Console\LagunaModulosDeployReconstruirCommand;
 use iEducar\Packages\BuritiLagunaAmbiente\Console\LagunaSimularPessoasCommand;
 use iEducar\Packages\BuritiLagunaAmbiente\Http\Middleware\ExigeModuloAtivo;
 use iEducar\Packages\BuritiLagunaAmbiente\Http\Middleware\InjetarPainelModulosDeploy;
@@ -94,6 +95,7 @@ class LagunaAmbienteServiceProvider extends ServiceProvider
                 LagunaQuadroPedagogicoCommand::class,
                 LagunaOtimizarCommand::class,
                 LagunaSimularPessoasCommand::class,
+                LagunaModulosDeployReconstruirCommand::class,
             ]);
 
             if (\App\Support\Tenancy\PackageTenant::allows(self::PACKAGE)) {

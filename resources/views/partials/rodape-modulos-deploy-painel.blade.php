@@ -65,7 +65,9 @@
           var tom = m.ativo ? '#17663f' : '#b86e00';
           var fundo = m.ativo ? '#e5f6ec' : '#fff4e0';
           var st = m.ativo ? 'Ativo' : 'Instalado (off)';
-          var deploy = m.deployed_at_br || 'Deploy ainda não registrado pelo CI';
+          var deploy = m.deployed_at_br
+            ? ((m.source === 'inventario-servidor' ? 'Inventário · ' : 'CI · ') + m.deployed_at_br)
+            : 'Sem registro de deploy CI';
           var sha = m.sha ? ' · ' + m.sha : '';
           return (
             '<article style="border:1px solid #cfd8df;border-radius:12px;padding:10px 12px;display:grid;gap:4px">' +
