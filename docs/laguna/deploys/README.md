@@ -10,12 +10,12 @@ Publicação automática dos pacotes da org [i-Educar](https://github.com/i-Educ
 1. Push em `main` (ou *Run workflow*) no repositório do pacote.
 2. Job **Deploy Laguna** chama o reutilizável  
    `i-Educar/i-educar-laguna-ambiente-package/.github/workflows/reusable-deploy-laguna.yml@main`.
-3. **Testes do módulo (CI):** `php tests/run.php` no runner (PHP 8.3), se existir.
+3. **Testes do módulo (CI):** `php tests/run.php` no runner (PHP 8.3), se existir — aviso se o smoke isolado depender do monorepo.
 4. `rsync` via SSH para o caminho de [`paths.map.json`](./paths.map.json).
-5. **Pós-deploy no servidor:**
+5. **Pós-deploy no servidor (gate definitivo):**
    - `view:clear` + `package:discover`
    - `php artisan migrate --force --path=<pacote>/database/migrations` (só deste módulo)
-   - `php <pacote>/tests/run.php` de novo (com Laravel do monorepo)
+   - `php <pacote>/tests/run.php` (com Laravel do monorepo) — **falha o deploy se FAIL**
    - `vendor/bin/phpunit <pacote>/tests/Feature` se a pasta existir
 6. **Registro Git:** tag anotada no pacote `deploy/laguna/YYYYMMDD-HHMM-<sha>`.
 
