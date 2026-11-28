@@ -32,9 +32,14 @@ for repo, rel in sorted(mapping.items()):
     if not local.is_dir() or not (local / ".git").exists():
         print(f"skip (sem .git): {repo} → {rel}")
         continue
+    # Hub mantém caller local (uses: ./reusable-...)
+    if repo == "i-educar-laguna-ambiente-package":
+        print(f"skip (hub): {repo}")
+        continue
     wf_dir = local / ".github" / "workflows"
     wf_dir.mkdir(parents=True, exist_ok=True)
     dest = wf_dir / "deploy-laguna.yml"
+
     # Caller aponta para o hub; package_repo vem do github.event.repository.name
     dest.write_text(tpl)
     print(f"ok: {repo} → {dest.relative_to(monorepo)}")
