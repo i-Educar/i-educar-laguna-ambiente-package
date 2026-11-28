@@ -279,6 +279,7 @@ jobs:
           echo "Synced $REL @ $SHA → $DEST"
 
       - name: Pós-deploy (migrate do pacote + testes + artisan)
+        id: postdeploy
         run: |
           set -euo pipefail
           APP="${{ secrets.LAGUNA_APP_PATH }}"
@@ -298,7 +299,12 @@ jobs:
             fi
           }
 
-          php_bin artisan view:clear || true
+          # Lixo acidental de rsync antigo (path absoluto sob views)
+          if [ -d "\${REL}/resources/views/home" ]; then
+            echo "::warning::Removendo path acidental \${REL}/resources/views/home"
+            rm -rf "\${REL}/resources/views/home" || true
+          fi
+
           php_bin artisan package:discover --ansi || true
 
           if [ "\$RUN_MIGRATE" = 'true' ]; then
@@ -348,6 +354,37 @@ jobs:
               fi
             fi
           fi
+          EOF
+
+      - name: Esvaziar caches Laravel (fim do pipeline)
+        if: ${{ always() && steps.sync.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          APP="${{ secrets.LAGUNA_APP_PATH }}"
+          ssh laguna "bash -s" <<EOF
+          set -euo pipefail
+          cd '$APP'
+          php_bin() {
+            if id www-data >/dev/null 2>&1; then
+              sudo -u www-data php "\$@"
+            else
+              php "\$@"
+            fi
+          }
+          echo "::group::artisan cache flush"
+          php_bin artisan view:clear || true
+          php_bin artisan cache:clear || true
+          php_bin artisan config:clear || true
+          php_bin artisan route:clear || true
+          php_bin artisan event:clear || true
+          php_bin artisan optimize:clear || true
+          # OPcache (FPM/CLI) — sem derrubar o PHP-FPM
+          php_bin -r 'if (function_exists("opcache_reset")) { opcache_reset(); echo "opcache_reset ok\\n"; } else { echo "opcache indisponível no CLI\\n"; }' || true
+          if command -v redis-cli >/dev/null 2>&1; then
+            PREFIX=\$(php_bin -r 'echo config("cache.prefix") ?: (config("database.redis.options.prefix") ?: "");' 2>/dev/null || true)
+            echo "cache prefix hint: \${PREFIX:-n/d}"
+          fi
+          echo "::endgroup::"
           EOF
 
       - name: Registrar manifesto de deploy no servidor
