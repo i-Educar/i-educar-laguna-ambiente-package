@@ -44,6 +44,6 @@
             aria-expanded="false">
         <i class="fa fa-cubes" aria-hidden="true"></i>
         <span class="rodape-op-rotulo">Módulos</span>
-        <strong>CI</strong>
+        <strong title="CI = deploy confirmado · Inventário = ainda não">CI</strong>
     </button>
 </li>
